@@ -88,16 +88,20 @@ export function useIdeas(user) {
   }, [user]); // Removido activeFolderId de dependencias para evitar subscripciones innecesarias
 
   const addIdea = async (idea) => {
-    if (!user) return;
+    if (!user) throw new Error('No hay usuario autenticado');
+    const docData = {
+      ...idea,
+      userId: user.uid,
+      completed: false,
+      createdAt: serverTimestamp(),
+    };
+    console.log('[addIdea] Intentando guardar en Firestore:', docData);
     try {
-      await addDoc(collection(db, 'ideas'), {
-        ...idea,
-        userId: user.uid,
-        completed: false,
-        createdAt: serverTimestamp(),
-      });
+      const ref = await addDoc(collection(db, 'ideas'), docData);
+      console.log('[addIdea] ✅ Guardado con ID:', ref.id);
     } catch (error) {
-      console.error("Error adding idea: ", error);
+      console.error('[addIdea] ❌ Error de Firestore:', error.code, error.message);
+      throw error;
     }
   };
 
@@ -120,16 +124,15 @@ export function useIdeas(user) {
 
   const addFolder = async (name, forcedUserId) => {
     const userId = forcedUserId || user?.uid;
-    if (!userId) return;
+    if (!userId) throw new Error('No hay usuario autenticado');
+    const docData = { name, userId, icon: 'Folder', createdAt: serverTimestamp() };
+    console.log('[addFolder] Intentando guardar en Firestore:', docData);
     try {
-      await addDoc(collection(db, 'folders'), {
-        name,
-        userId,
-        icon: 'Folder',
-        createdAt: serverTimestamp()
-      });
+      const ref = await addDoc(collection(db, 'folders'), docData);
+      console.log('[addFolder] ✅ Guardado con ID:', ref.id);
     } catch (error) {
-      console.error("Error adding folder: ", error);
+      console.error('[addFolder] ❌ Error de Firestore:', error.code, error.message);
+      throw error;
     }
   };
 

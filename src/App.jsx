@@ -39,6 +39,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [editingIdea, setEditingIdea] = useState(null);
+  const [editingFolder, setEditingFolder] = useState(null);
   const [toast, setToast] = useState(null);
   const [draggedIdeaId, setDraggedIdeaId] = useState(null);
   const [authView, setAuthView] = useState('login'); // 'login' or 'register'
@@ -135,15 +136,23 @@ function App() {
     setToast({ message, type });
   };
 
-  const handleCreateIdea = (data) => {
-    if (editingIdea) {
-      updateIdea(editingIdea.id, data);
-      showToast('Idea actualizada correctamente');
-    } else {
-      addIdea(data);
-      showToast('Idea creada correctamente');
+  const handleCreateIdea = async (data) => {
+    try {
+      if (editingIdea) {
+        await updateIdea(editingIdea.id, data);
+        showToast('Idea actualizada correctamente');
+      } else {
+        await addIdea(data);
+        showToast('Idea creada correctamente');
+      }
+      setEditingIdea(null);
+    } catch (error) {
+      const msg = error.code === 'permission-denied'
+        ? '❌ Sin permisos en Firestore. Revisa las reglas de seguridad en la consola de Firebase.'
+        : `❌ Error al guardar: ${error.message}`;
+      showToast(msg, 'error');
+      console.error('handleCreateIdea error:', error);
     }
-    setEditingIdea(null);
   };
 
   const handleEditIdea = (idea) => {
@@ -151,9 +160,47 @@ function App() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteIdea = (id) => {
-    deleteIdea(id);
-    showToast('Idea eliminada', 'info');
+  const handleDeleteIdea = async (id) => {
+    try {
+      await deleteIdea(id);
+      showToast('Idea eliminada', 'info');
+    } catch (error) {
+      showToast('❌ Error al eliminar la idea', 'error');
+    }
+  };
+
+  const handleOpenFolderModal = (folder = null) => {
+    setEditingFolder(folder);
+    setIsFolderModalOpen(true);
+  };
+
+  const handleFolderSubmit = async (name) => {
+    try {
+      if (editingFolder) {
+        await renameFolder(editingFolder.id, name);
+        showToast('Carpeta renombrada correctamente');
+      } else {
+        await addFolder(name);
+        showToast('Carpeta creada correctamente');
+      }
+      setEditingFolder(null);
+    } catch (error) {
+      showToast('❌ Error al guardar la carpeta', 'error');
+    }
+  };
+
+  const handleDeleteFolder = async (id) => {
+    const hasIdeas = ideas.some(i => i.folderId === id);
+    if (hasIdeas) {
+      showToast('⚠️ Mueve las ideas antes de eliminar esta carpeta', 'error');
+      return;
+    }
+    try {
+      await deleteFolder(id);
+      showToast('Carpeta eliminada', 'info');
+    } catch (error) {
+      showToast('❌ Error al eliminar la carpeta', 'error');
+    }
   };
 
   const activeFolderName = folders.find(f => f.id === activeFolderId)?.name || 'General';
@@ -236,13 +283,15 @@ function App() {
                 folders={folders}
                 activeFolderId={activeFolderId}
                 onSelectFolder={(id) => { setActiveFolderId(id); setIsSidebarOpen(false); }}
-                onAddFolder={() => { setIsFolderModalOpen(true); setIsSidebarOpen(false); }}
+                onAddFolder={() => { handleOpenFolderModal(); setIsSidebarOpen(false); }}
                 onSettingsOpen={() => { setIsSettingsOpen(true); setIsSidebarOpen(false); }}
                 onNewIdea={() => { setEditingIdea(null); setIsModalOpen(true); setIsSidebarOpen(false); }}
                 onDropIdea={(ideaId, destFolderId) => {
                   updateIdea(ideaId, { folderId: destFolderId });
                   showToast('Idea movida correctamente');
                 }}
+                onRenameFolder={(folder) => { handleOpenFolderModal(folder); setIsSidebarOpen(false); }}
+                onDeleteFolder={(id) => { handleDeleteFolder(id); setIsSidebarOpen(false); }}
               />
             </motion.div>
           </div>
@@ -254,13 +303,15 @@ function App() {
           folders={folders}
           activeFolderId={activeFolderId}
           onSelectFolder={setActiveFolderId}
-          onAddFolder={() => setIsFolderModalOpen(true)}
+          onAddFolder={() => handleOpenFolderModal()}
           onSettingsOpen={() => setIsSettingsOpen(true)}
           onNewIdea={() => { setEditingIdea(null); setIsModalOpen(true); }}
           onDropIdea={(ideaId, destFolderId) => {
             updateIdea(ideaId, { folderId: destFolderId });
             showToast('Idea movida correctamente');
           }}
+          onRenameFolder={handleOpenFolderModal}
+          onDeleteFolder={handleDeleteFolder}
         />
       </div>
 
@@ -342,14 +393,16 @@ function App() {
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingIdea(null); }}
         folders={folders}
+        activeFolderId={activeFolderId}
         initialIdea={editingIdea}
         onSave={handleCreateIdea}
       />
 
       <FolderModal
         isOpen={isFolderModalOpen}
-        onClose={() => setIsFolderModalOpen(false)}
-        onSubmit={addFolder}
+        onClose={() => { setIsFolderModalOpen(false); setEditingFolder(null); }}
+        onSubmit={handleFolderSubmit}
+        initialFolder={editingFolder}
       />
 
       <SettingsModal 
@@ -360,12 +413,9 @@ function App() {
         onToggleDarkMode={toggleDarkMode}
         onLogout={handleLogout}
         folders={folders}
-        onRenameFolder={(folder) => {
-          const newName = prompt('Nuevo nombre:', folder.name);
-          if (newName) renameFolder(folder.id, newName);
-        }}
-        onDeleteFolder={deleteFolder}
-        onNewFolder={() => setIsFolderModalOpen(true)}
+        onRenameFolder={handleOpenFolderModal}
+        onDeleteFolder={handleDeleteFolder}
+        onNewFolder={() => handleOpenFolderModal()}
       />
 
       <AnimatePresence>

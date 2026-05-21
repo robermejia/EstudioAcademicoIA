@@ -1,9 +1,17 @@
-import { X, FolderPlus } from 'lucide-react';
+import { X, FolderPlus, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export function FolderModal({ isOpen, onClose, onSubmit }) {
+export function FolderModal({ isOpen, onClose, onSubmit, initialFolder }) {
   const [name, setName] = useState('');
+
+  const isEditing = !!initialFolder;
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(initialFolder ? initialFolder.name : '');
+    }
+  }, [isOpen, initialFolder]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,10 +41,15 @@ export function FolderModal({ isOpen, onClose, onSubmit }) {
             <div className="p-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="bg-primary/10 p-2 rounded-xl text-primary">
-                    <FolderPlus className="w-5 h-5" />
+                  <div className={`p-2 rounded-xl ${isEditing ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary'}`}>
+                    {isEditing
+                      ? <Pencil className="w-5 h-5" />
+                      : <FolderPlus className="w-5 h-5" />
+                    }
                   </div>
-                  <h2 className="text-xl font-bold text-text-main">Nueva Carpeta</h2>
+                  <h2 className="text-xl font-bold text-text-main">
+                    {isEditing ? 'Renombrar Carpeta' : 'Nueva Carpeta'}
+                  </h2>
                 </div>
                 <button onClick={onClose} className="p-2 hover:bg-surface rounded-xl transition-colors text-text-muted">
                   <X className="w-5 h-5" />
@@ -67,9 +80,13 @@ export function FolderModal({ isOpen, onClose, onSubmit }) {
                   </button>
                   <button
                     type="submit"
-                    className="flex-[2] bg-primary hover:bg-primary-hover text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-primary/20 active:scale-95"
+                    className={`flex-[2] text-white font-bold py-4 rounded-2xl transition-all shadow-lg active:scale-95 ${
+                      isEditing
+                        ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
+                        : 'bg-primary hover:bg-primary-hover shadow-primary/20'
+                    }`}
                   >
-                    Crear Carpeta
+                    {isEditing ? 'Guardar cambios' : 'Crear Carpeta'}
                   </button>
                 </div>
               </form>

@@ -39,6 +39,13 @@ export function IdeaCard({ idea, folderName, onToggleComplete, onEdit, onDelete,
           {idea.completed ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
         </button>
         
+        {/* Icono de la idea */}
+        {idea.icon && (
+          <div className="text-2xl flex-shrink-0 mt-0.5" title="Icono">
+            {idea.icon}
+          </div>
+        )}
+
         <div className="flex-1 min-w-0">
           <h3 className={cn(
             "font-bold text-lg text-text-main line-clamp-1 group-hover:text-primary transition-colors italic transition-all",
