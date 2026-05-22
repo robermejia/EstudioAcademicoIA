@@ -263,7 +263,7 @@ function App() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-bg-app text-text-main transition-colors duration-300 overflow-hidden relative z-0">
+    <div className="flex h-screen w-full bg-bg-app text-text-main transition-colors duration-300 overflow-hidden relative z-0">
       {/* Sidebar Mobile Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
