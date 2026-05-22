@@ -85,7 +85,7 @@ export function IdeaCard({ idea, folderName, onToggleComplete, onEdit, onDelete,
           </div>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity">
           <button 
             onClick={() => onEdit(idea)}
             className="p-2 text-text-muted hover:text-primary hover:bg-surface rounded-lg transition-all"

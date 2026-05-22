@@ -110,7 +110,9 @@ export function Sidebar({ folders, activeFolderId, onSelectFolder, onNewIdea, on
             {!isCollapsed && (
               <div className={cn(
                 "absolute right-2 top-1/2 -translate-y-1/2 transition-opacity",
-                openMenuId === folder.id ? "opacity-100" : "opacity-0 group-hover/folder:opacity-100"
+                openMenuId === folder.id
+                  ? "opacity-100"
+                  : "opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/folder:opacity-100"
               )}>
                 <button
                   onClick={(e) => {
