@@ -11,7 +11,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [setupMode, setSetupMode] = useState(false); // true si no hay administradores y se creará el primero
+  const [setupMode, setSetupMode] = useState(false); // default to false (Login)
   const [checkingSetup, setCheckingSetup] = useState(true);
 
   // Verificar si la BD ya tiene un administrador al montar
@@ -21,7 +21,8 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
         const existAdmins = await hasAdmins();
         setSetupMode(!existAdmins);
       } catch (err) {
-        console.error('Error checking admin setup:', err);
+        console.error('Error checking admin setup (defaulting to Login):', err);
+        setSetupMode(false);
       } finally {
         setCheckingSetup(false);
       }
@@ -208,6 +209,18 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
               <UserPlus className="w-4 h-4" />
               {loading ? 'Creando cuenta...' : 'Crear Admin e Iniciar'}
             </button>
+            
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setSetupMode(false);
+                setError('');
+              }}
+              className="w-full text-center text-xs text-primary hover:underline cursor-pointer font-semibold mt-3"
+            >
+              ¿Ya tienes cuenta? Iniciar Sesión
+            </button>
           </form>
         ) : (
           /* Formulario de Login Estándar */
@@ -257,6 +270,18 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             >
               <LogIn className="w-4 h-4" />
               {loading ? 'Accediendo...' : 'Iniciar Sesión'}
+            </button>
+            
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setSetupMode(true);
+                setError('');
+              }}
+              className="w-full text-center text-xs text-primary hover:underline cursor-pointer font-semibold mt-3"
+            >
+              ¿No hay administradores creados? Registrar Administrador Inicial
             </button>
           </form>
         )}

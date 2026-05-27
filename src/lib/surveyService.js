@@ -113,7 +113,7 @@ export async function hasAdmins() {
     return !snap.empty;
   } catch (error) {
     console.error('Error al verificar existencia de administradores:', error);
-    return false;
+    throw error;
   }
 }
 
