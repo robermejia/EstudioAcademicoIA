@@ -1,42 +1,53 @@
-# 💡 IdeaManager
+# 🎓 Cuestionario Académico sobre IA Generativa y Efectividad del Aprendizaje
 
-![Preview](https://i.ibb.co/81gG98C/preview.png)
+Este proyecto es una aplicación web moderna, responsiva y profesional diseñada para evaluar el impacto de las herramientas de Inteligencia Artificial Generativa (como ChatGPT, Gemini y Copilot) en la comprensión de contenidos y la creatividad de los estudiantes.
 
-**IdeaManager** es una aplicación web moderna y elegante diseñada para capturar, organizar y gestionar tus ideas de manera eficiente. Con un diseño premium inspirado en las mejores herramientas de productividad, permite mantener tus pensamientos en orden tanto en escritorio como en dispositivos móviles.
-
-🚀 **Despliegue en vivo:** [https://ideamanager-vbzv.onrender.com](https://ideamanager-vbzv.onrender.com)
+El sistema sigue una metodología de investigación de tipo **Pretest / Posttest** con una capacitación multimedia intermedia.
 
 ---
 
 ## ✨ Características Principales
 
-- 🔐 **Autenticación Completa**: Inicia sesión de forma segura con tu cuenta de Google o mediante correo y contraseña.
-- 📁 **Organización por Carpetas**: Clasifica tus ideas en diferentes categorías para mantener tu flujo de trabajo organizado.
-- 🌓 **Modo Oscuro/Claro**: Interfaz adaptable que cuida tu vista en cualquier entorno.
-- 📱 **Diseño 100% Responsivo**: Experiencia de usuario optimizada para móviles con una barra de navegación dedicada.
-- ⚡ **Persistencia en Tiempo Real**: Tus ideas se sincronizan al instante a través de Firebase Firestore.
-- 🎨 **Interfaz Premium**: Animaciones fluidas con Framer Motion y una estética moderna y limpia.
+### 📋 Flujo del Participante
+1. **Pantalla de Bienvenida:** Introducción académica sobre el propósito del estudio y el tratamiento confidencial de los datos.
+2. **Consentimiento Informado:** Aceptación obligatoria de los términos y verificación de mayoría de edad (bloqueo automático para menores de 18 años).
+3. **Datos Generales:** Formulario de segmentación demográfica (Edad, Sexo, uso previo de herramientas de IA y herramienta favorita).
+4. **Fase PRETEST:** Cuestionario interactivo basado en una **escala Likert (1 a 5)** con 19 preguntas divididas en 5 dimensiones académicas.
+5. **Capacitación Intermedia:** Video instructivo integrado (YouTube IFrame API) con monitoreo de reproducción en tiempo real. La segunda fase se desbloquea únicamente tras visualizar al menos el 90% del video.
+6. **Fase POSTEST:** Cuestionario de control final de 19 preguntas idénticas para medir el delta de aprendizaje y efectividad.
+7. **Pantalla de Resultados:** Mensaje de agradecimiento y generación de un **ID Único de Participación** (`IA-STUDY-XXXXX`).
+
+### 🎛️ Panel de Administración (Dashboard Estadístico)
+- **Acceso Protegido:** Login de seguridad enlazado con Firebase Authentication.
+- **Auto-Onboarding:** Si la base de datos es nueva (sin administradores), la interfaz de login permite registrar de forma directa la primera cuenta maestra para evitar bloqueos.
+- **KPIs Descriptivos:** Tarjetas con el total de encuestas, edad promedio y porcentajes de uso de IA.
+- **Comparación Visual:** Gráficos comparativos de promedios de Pretest vs. Posttest por dimensión (ChatGPT, Gemini, Copilot, Comprensión de contenidos, Creatividad).
+- **Control de Respuestas:** Tabla interactiva de participantes con buscador y visor modal para examinar las respuestas individuales pregunta por pregunta.
+- **Exportación de Datos:** Descarga de la base de datos completa en formato **CSV codificado en UTF-8 BOM** compatible de manera directa con Excel, SPSS y R.
 
 ---
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Frontend**: [React.js](https://reactjs.org/) (Vite)
-- **Estilos**: [Tailwind CSS 4.0](https://tailwindcss.com/)
-- **Backend / DB**: [Firebase](https://firebase.google.com/) (Auth & Firestore)
-- **Iconografía**: [Lucide React](https://lucide.dev/)
-- **Animaciones**: [Framer Motion](https://www.framer.com/motion/)
+- **Frontend:** React.js (Vite)
+- **Estilos:** Tailwind CSS v4.0 (Neutros y Azules elegantes con soporte completo de Modo Claro / Oscuro)
+- **Animaciones:** Framer Motion (Transiciones fluidas entre preguntas y modales)
+- **Base de Datos / Auth:** Firebase (Firestore y Authentication)
+- **Iconografía:** Lucide React
 
 ---
 
 ## 🚀 Instalación y Desarrollo Local
 
-Si deseas ejecutar este proyecto en tu entorno local, sigue estos pasos:
+### Requisitos Previos
+- Node.js (versión 18 o superior)
+- NPM
 
+### Pasos
 1. **Clona el repositorio:**
    ```bash
-   git clone https://github.com/robermejia/IdeaManager.git
-   cd IdeaManager
+   git clone https://github.com/robermejia/EstudioAcademicoIA.git
+   cd EstudioAcademicoIA
    ```
 
 2. **Instala las dependencias:**
@@ -44,30 +55,41 @@ Si deseas ejecutar este proyecto en tu entorno local, sigue estos pasos:
    npm install
    ```
 
-3. **Configura Firebase:**
-   Crea un archivo `src/lib/firebase.js` (o edita el actual) con tus propias credenciales de Firebase Console:
-   ```javascript
-   const firebaseConfig = {
-     apiKey: "TU_API_KEY",
-     authDomain: "TU_AUTH_DOMAIN",
-     projectId: "TU_PROJECT_ID",
-     storageBucket: "TU_STORAGE_BUCKET",
-     messagingSenderId: "TU_MESSAGING_SENDER_ID",
-     appId: "TU_APP_ID"
-   };
-   ```
-
-4. **Inicia el servidor de desarrollo:**
+3. **Inicia el servidor de desarrollo local:**
    ```bash
    npm run dev
    ```
+   La aplicación estará disponible en `http://localhost:5173/`.
 
 ---
 
-## 📄 Licencia
+## 🛢️ Configuración de Firebase
 
-Este proyecto está bajo la licencia MIT.
+La aplicación utiliza Firebase Firestore para la persistencia. La configuración se localiza en `src/lib/firebase.js`.
+
+### Estructura de la Base de Datos
+1. **`survey_responses` (Colección):**
+   Almacena las participaciones enviadas. Cada documento contiene:
+   - `participantId`: ID único asignado.
+   - `demographics`: `{ age, gender, hasUsedAI, mostUsedTool }`
+   - `pretest`: Respuestas Likert de la fase pretest (1 a 5).
+   - `posttest`: Respuestas Likert de la fase posttest (1 a 5).
+   - `submittedAt`: Timestamp del servidor.
+   - `systemInfo`: Navegador, idioma y resolución del dispositivo.
+
+2. **`admins` (Colección):**
+   Almacena los UIDs autorizados para ingresar al panel de control.
+   - Si esta colección está vacía en tu Firestore, la aplicación detectará el estado y te mostrará el formulario de **"Crear Administrador Inicial"** al entrar en el **Área del Administrador** en el footer.
 
 ---
 
-Diseñado y desarrollado por [Rober Mejia](https://github.com/robermejia).
+## ☁️ Despliegue en Render
+
+Para desplegar esta aplicación estática en Render:
+
+1. Ve a tu Dashboard de Render y crea un nuevo **Static Site**.
+2. Vincula tu repositorio de GitHub `EstudioAcademicoIA`.
+3. Configura los siguientes parámetros de compilación:
+   - **Build Command:** `npm run build`
+   - **Publish Directory:** `dist`
+4. Haz clic en **Create Static Site**.
