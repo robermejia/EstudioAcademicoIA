@@ -1,496 +1,423 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import { Sidebar } from './components/Sidebar';
-import { TopBar } from './components/TopBar';
-import { IdeaCard } from './components/IdeaCard';
-import { IdeaModal } from './components/IdeaModal';
-import { FolderModal } from './components/FolderModal';
-import { TrashModal } from './components/TrashModal';
-import { EmptyState } from './components/EmptyState';
-import { Toast } from './components/Toast';
-import { useIdeas } from './hooks/useIdeas';
-import { AuthLayout } from './components/auth/AuthLayout';
-import { Login } from './components/auth/Login';
-import { Register } from './components/auth/Register';
-import { SettingsModal } from './components/SettingsModal';
-import { BottomNav } from './components/BottomNav';
-import { auth, googleProvider } from './lib/firebase';
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  signInWithPopup,
-  updateProfile
-} from 'firebase/auth';
+import { Sun, Moon, RotateCcw, GraduationCap } from 'lucide-react';
+
+// Cargar Componentes del Cuestionario
+import { WelcomeScreen } from './components/survey/WelcomeScreen';
+import { ConsentForm } from './components/survey/ConsentForm';
+import { DemographicsForm } from './components/survey/DemographicsForm';
+import { LikertCard } from './components/survey/LikertCard';
+import { ProgressBar } from './components/survey/ProgressBar';
+import { VideoTraining } from './components/survey/VideoTraining';
+import { ResultsScreen } from './components/survey/ResultsScreen';
+import { AdminLogin } from './components/admin/AdminLogin';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+
+// Cargar Servicios y Utilidades
+import {
+  generateParticipantId,
+  saveLocalProgress,
+  getLocalProgress,
+  clearLocalProgress,
+  submitSurveyResponse
+} from './lib/surveyService';
+
+// Definición de las 19 preguntas del Cuestionario
+const QUESTIONS = [
+  // Dimensión: ChatGPT
+  { id: 'chatgpt_q1', dimension: 'ChatGPT', text: 'ChatGPT me ayuda a comprender mejor los temas académicos.' },
+  { id: 'chatgpt_q2', dimension: 'ChatGPT', text: 'Utilizo ChatGPT para resolver dudas relacionadas con mis estudios.' },
+  { id: 'chatgpt_q3', dimension: 'ChatGPT', text: 'ChatGPT facilita mi aprendizaje de nuevos contenidos.' },
+
+  // Dimensión: Gemini
+  { id: 'gemini_q1', dimension: 'Gemini', text: 'Gemini facilita la búsqueda de información académica.' },
+  { id: 'gemini_q2', dimension: 'Gemini', text: 'Gemini me ayuda a organizar mejor mis ideas y contenidos.' },
+  { id: 'gemini_q3', dimension: 'Gemini', text: 'Considero que Gemini mejora mi aprendizaje autónomo.' },
+
+  // Dimensión: Copilot
+  { id: 'copilot_q1', dimension: 'Copilot', text: 'Copilot me ayuda a generar soluciones o ideas nuevas.' },
+  { id: 'copilot_q2', dimension: 'Copilot', text: 'Copilot facilita el desarrollo de actividades académicas.' },
+  { id: 'copilot_q3', dimension: 'Copilot', text: 'Considero que Copilot mejora mi productividad académica.' },
+
+  // Dimensión: Comprensión de contenidos
+  { id: 'comprension_q1', dimension: 'Comprensión de contenidos', text: 'Soy capaz de explicar los conceptos aprendidos con mis propias palabras.' },
+  { id: 'comprension_q2', dimension: 'Comprensión de contenidos', text: 'Comprendo la relación entre los temas desarrollados durante la capacitación.' },
+  { id: 'comprension_q3', dimension: 'Comprensión de contenidos', text: 'Puedo aplicar los conocimientos aprendidos en ejercicios prácticos.' },
+  { id: 'comprension_q4', dimension: 'Comprensión de contenidos', text: 'Identifico con claridad las ideas principales del contenido presentado.' },
+  { id: 'comprension_q5', dimension: 'Comprensión de contenidos', text: 'Relaciono los nuevos conocimientos con aprendizajes previos.' },
+
+  // Dimensión: Creatividad
+  { id: 'creatividad_q1', dimension: 'Creatividad', text: 'Genero nuevas ideas a partir de los contenidos aprendidos.' },
+  { id: 'creatividad_q2', dimension: 'Creatividad', text: 'Propongo soluciones diferentes utilizando herramientas de IA generativa.' },
+  { id: 'creatividad_q3', dimension: 'Creatividad', text: 'Combino diferentes ideas para crear propuestas originales.' },
+  { id: 'creatividad_q4', dimension: 'Creatividad', text: 'Exploro nuevas formas de resolver problemas académicos.' },
+  { id: 'creatividad_q5', dimension: 'Creatividad', text: 'Adapto los conocimientos aprendidos a nuevas situaciones.' }
+];
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  // Estados Principales del Flujo (Cargados por Lazy Initialization para evitar cascading renders)
+  const [currentStep, setCurrentStep] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.currentStep || 'WELCOME';
+  });
+  const [demographics, setDemographics] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.demographics || null;
+  });
+  const [pretestAnswers, setPretestAnswers] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.pretestAnswers || {};
+  });
+  const [posttestAnswers, setPosttestAnswers] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.posttestAnswers || {};
+  });
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.currentQuestionIndex !== undefined ? saved.currentQuestionIndex : 0;
+  });
+  const [participantId, setParticipantId] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.participantId || generateParticipantId();
+  });
+  
+  // Estado de Sincronización y Carga
+  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, synced, failed
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const { 
-    ideas, trashedIdeas, folders, activeFolderId, setActiveFolderId, 
-    addIdea, updateIdea, deleteIdea, restoreIdea, permanentDeleteIdea, emptyTrash,
-    addFolder, deleteFolder, renameFolder,
-    loading: ideasLoading
-  } = useIdeas(user);
+  // Estado de Vista de Administrador
+  const [isAdminView, setIsAdminView] = useState(false);
+  const [adminUser, setAdminUser] = useState(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('createdAt'); // 'createdAt' | 'updatedAt'
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
-  const [editingIdea, setEditingIdea] = useState(null);
-  const [editingFolder, setEditingFolder] = useState(null);
-  const [toast, setToast] = useState(null);
-  const [draggedIdeaId, setDraggedIdeaId] = useState(null);
-  const [authView, setAuthView] = useState('login'); // 'login' or 'register'
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isTrashOpen, setIsTrashOpen] = useState(false);
-
+  // Estado del Modo Oscuro
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('idea-manager-dark-mode');
+    const saved = localStorage.getItem('ia-survey-dark-mode');
     return saved ? JSON.parse(saved) : false;
   });
 
+  // Efecto: Manejo del Modo Oscuro
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('idea-manager-dark-mode', JSON.stringify(isDarkMode));
+    localStorage.setItem('ia-survey-dark-mode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
+  // Efecto: Guardar progreso automáticamente
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    if (currentStep !== 'RESULTS' && currentStep !== 'WELCOME') {
+      saveLocalProgress({
+        currentStep,
+        demographics,
+        pretestAnswers,
+        posttestAnswers,
+        currentQuestionIndex,
+        participantId
+      });
+    }
+  }, [currentStep, demographics, pretestAnswers, posttestAnswers, currentQuestionIndex, participantId]);
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
-  const handleLogin = async (credentials) => {
-    try {
-      await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
-      showToast('Bienvenido de nuevo');
-    } catch (error) {
-      showToast('Error al iniciar sesión', 'error');
+  // Reiniciar la encuesta
+  const handleResetSurvey = () => {
+    if (window.confirm('¿Está seguro de que desea reiniciar la encuesta? Perderá el progreso actual.')) {
+      clearLocalProgress();
+      setDemographics(null);
+      setPretestAnswers({});
+      setPosttestAnswers({});
+      setCurrentQuestionIndex(0);
+      setParticipantId(generateParticipantId());
+      setCurrentStep('WELCOME');
+      setSyncStatus('idle');
+      setErrorMsg('');
     }
   };
 
-  const handleRegister = async (data) => {
+  // Guardar respuestas en Firebase al finalizar
+  const handleSubmitSurvey = async (finalPayload) => {
+    setSyncStatus('syncing');
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      await updateProfile(userCredential.user, { displayName: data.name });
-      showToast('Cuenta creada correctamente. ¡Ya puedes iniciar sesión!');
-      await signOut(auth);
-      setAuthView('login');
-    } catch (error) {
-      if (error.code === 'auth/operation-not-allowed') {
-        showToast('Debes habilitar "Correo electrónico/Contraseña" en tu consola de Firebase.', 'error');
-      } else {
-        showToast('Error al crear cuenta: ' + error.message, 'error');
+      const res = await submitSurveyResponse(finalPayload);
+      if (res.success) {
+        setSyncStatus('synced');
+        clearLocalProgress();
       }
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      showToast('Bienvenido con Google');
     } catch (error) {
-      showToast('Error con Google', 'error');
+      setSyncStatus('failed');
+      setErrorMsg(error.message || 'Error de conexión');
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      showToast('Sesión cerrada', 'info');
-    } catch (error) {
-      showToast('Error al cerrar sesión', 'error');
-    }
-  };
+  // Avanzar en las preguntas del Likert
+  const handleNextQuestion = () => {
+    const isPretest = currentStep === 'PRETEST';
+    const answers = isPretest ? pretestAnswers : posttestAnswers;
+    const currentQuestion = QUESTIONS[currentQuestionIndex];
 
-  const filteredIdeas = useMemo(() => {
-    return ideas
-      .filter(idea => activeFolderId === null || idea.folderId === activeFolderId)
-      .filter(idea => {
-        if (filter === 'completed') return idea.completed;
-        if (filter === 'pending') return !idea.completed;
-        return true;
-      })
-      .filter(idea => {
-        if (!idea) return false;
-        const search = searchQuery.toLowerCase();
-        return (
-          (idea.title?.toLowerCase().includes(search)) ||
-          (idea.description?.toLowerCase().includes(search)) ||
-          (idea.tags?.some(t => t.toLowerCase().includes(search)))
-        );
-      })
-      .sort((a, b) => {
-        if (sortBy === 'updatedAt') {
-          const aDate = a.updatedAt || a.createdAt;
-          const bDate = b.updatedAt || b.createdAt;
-          return new Date(bDate) - new Date(aDate);
-        }
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
-  }, [ideas, activeFolderId, filter, searchQuery, sortBy]);
-
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-  };
-
-  const handleCreateIdea = async (data) => {
-    try {
-      if (editingIdea) {
-        await updateIdea(editingIdea.id, data);
-        showToast('Idea actualizada correctamente');
-      } else {
-        await addIdea(data);
-        showToast('Idea creada correctamente');
-      }
-      setEditingIdea(null);
-    } catch (error) {
-      const msg = error.code === 'permission-denied'
-        ? '❌ Sin permisos en Firestore. Revisa las reglas de seguridad en la consola de Firebase.'
-        : `❌ Error al guardar: ${error.message}`;
-      showToast(msg, 'error');
-      console.error('handleCreateIdea error:', error);
-    }
-  };
-
-  const handleEditIdea = (idea) => {
-    setEditingIdea(idea);
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteIdea = async (id) => {
-    try {
-      await deleteIdea(id);
-      showToast('Idea eliminada', 'info');
-    } catch (error) {
-      showToast('❌ Error al eliminar la idea', 'error');
-    }
-  };
-
-  const handleOpenFolderModal = (folder = null) => {
-    setEditingFolder(folder);
-    setIsFolderModalOpen(true);
-  };
-
-  const handleFolderSubmit = async (name) => {
-    try {
-      if (editingFolder) {
-        await renameFolder(editingFolder.id, name);
-        showToast('Carpeta renombrada correctamente');
-      } else {
-        await addFolder(name);
-        showToast('Carpeta creada correctamente');
-      }
-      setEditingFolder(null);
-    } catch (error) {
-      showToast('❌ Error al guardar la carpeta', 'error');
-    }
-  };
-
-  const handleDeleteFolder = async (id) => {
-    const hasIdeas = ideas.some(i => i.folderId === id);
-    if (hasIdeas) {
-      showToast('⚠️ Mueve las ideas antes de eliminar esta carpeta', 'error');
+    // Validar que se haya contestado la pregunta actual
+    if (answers[currentQuestion.id] === undefined) {
+      alert('Por favor, seleccione una respuesta para continuar.');
       return;
     }
-    try {
-      await deleteFolder(id);
-      showToast('Carpeta eliminada', 'info');
-    } catch (error) {
-      showToast('❌ Error al eliminar la carpeta', 'error');
+
+    if (currentQuestionIndex < QUESTIONS.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      // Finalizó la fase actual
+      if (isPretest) {
+        setCurrentStep('VIDEO');
+      } else {
+        // Finalizó Posttest, preparar envío
+        const payload = {
+          participantId,
+          demographics,
+          pretest: pretestAnswers,
+          posttest: posttestAnswers,
+          createdAt: new Date().toISOString()
+        };
+        setCurrentStep('RESULTS');
+        handleSubmitSurvey(payload);
+      }
     }
   };
 
-  const activeFolderName = folders.find(f => f.id === activeFolderId)?.name || 'General';
+  // Retroceder en las preguntas del Likert o pantallas
+  const handleBackQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    } else {
+      if (currentStep === 'PRETEST') {
+        setCurrentStep('DEMOGRAPHICS');
+      } else if (currentStep === 'POSTTEST') {
+        setCurrentStep('VIDEO');
+      }
+    }
+  };
 
-  if (authLoading) {
-    return (
-      <div className="h-screen bg-bg-app flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  // Cambiar la respuesta en el estado local
+  const handleAnswerSelect = (value) => {
+    const isPretest = currentStep === 'PRETEST';
+    if (isPretest) {
+      setPretestAnswers(prev => ({
+        ...prev,
+        [QUESTIONS[currentQuestionIndex].id]: value
+      }));
+    } else {
+      setPosttestAnswers(prev => ({
+        ...prev,
+        [QUESTIONS[currentQuestionIndex].id]: value
+      }));
+    }
+  };
 
-  if (!user) {
-    return (
-      <AnimatePresence mode="wait">
-        {authView === 'login' ? (
-          <motion.div
-            key="login"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <AuthLayout 
-              title="¡Hola de nuevo!" 
-              subtitle="Entra para gestionar tus ideas más brillantes."
-            >
-              <Login 
-                onLogin={handleLogin} 
-                onGoogleLogin={handleGoogleLogin}
-                onNavigateRegister={() => setAuthView('register')} 
+
+
+  // Renderizar la pantalla según el paso actual
+  const renderStepContent = () => {
+    if (isAdminView) {
+      if (!adminUser) {
+        return (
+          <AdminLogin
+            onLoginSuccess={(user) => setAdminUser(user)}
+            onBack={() => setIsAdminView(false)}
+          />
+        );
+      }
+      return (
+        <AdminDashboard
+          onLogoutSuccess={() => setAdminUser(null)}
+        />
+      );
+    }
+
+    switch (currentStep) {
+      case 'WELCOME':
+        return <WelcomeScreen onStart={() => setCurrentStep('CONSENT')} />;
+      
+      case 'CONSENT':
+        return (
+          <ConsentForm
+            onAccept={() => setCurrentStep('DEMOGRAPHICS')}
+            onBack={() => setCurrentStep('WELCOME')}
+          />
+        );
+      
+      case 'DEMOGRAPHICS':
+        return (
+          <DemographicsForm
+            initialData={demographics}
+            onSave={(data) => {
+              setDemographics(data);
+              setCurrentStep('PRETEST');
+              setCurrentQuestionIndex(0);
+            }}
+            onBack={() => setCurrentStep('CONSENT')}
+          />
+        );
+      
+      case 'PRETEST':
+      case 'POSTTEST': {
+        const isPretest = currentStep === 'PRETEST';
+        const answers = isPretest ? pretestAnswers : posttestAnswers;
+        const currentQuestion = QUESTIONS[currentQuestionIndex];
+        const isAnswered = answers[currentQuestion.id] !== undefined;
+
+        return (
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+            <ProgressBar
+              current={currentQuestionIndex + 1}
+              total={QUESTIONS.length}
+              phase={currentStep}
+            />
+            
+            <AnimatePresence mode="wait">
+              <LikertCard
+                key={currentQuestion.id}
+                question={currentQuestion}
+                selectedValue={answers[currentQuestion.id]}
+                onChange={handleAnswerSelect}
               />
-            </AuthLayout>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="register"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <AuthLayout 
-              title="Crea tu cuenta" 
-              subtitle="Empieza a organizar tu futuro hoy mismo."
-            >
-              <Register 
-                onRegister={handleRegister} 
-                onGoogleLogin={handleGoogleLogin}
-                onNavigateLogin={() => setAuthView('login')} 
-              />
-            </AuthLayout>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
-  }
+            </AnimatePresence>
+
+            {/* Controles del Cuestionario */}
+            <div className="flex justify-between items-center pt-4">
+              <button
+                type="button"
+                onClick={handleBackQuestion}
+                className="flex items-center gap-1 px-5 py-3 hover:bg-surface rounded-xl border border-border text-text-main font-semibold transition-colors cursor-pointer"
+              >
+                Atrás
+              </button>
+              
+              <button
+                type="button"
+                disabled={!isAnswered}
+                onClick={handleNextQuestion}
+                className={`flex items-center gap-1.5 px-7 py-3 font-semibold rounded-xl text-white transition-all shadow-sm ${
+                  isAnswered
+                    ? 'bg-primary hover:bg-primary-hover hover:shadow cursor-pointer'
+                    : 'bg-text-muted/30 cursor-not-allowed opacity-50'
+                }`}
+              >
+                {currentQuestionIndex === QUESTIONS.length - 1 
+                  ? (isPretest ? 'Finalizar Pretest' : 'Enviar Encuesta') 
+                  : 'Siguiente'
+                }
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      case 'VIDEO':
+        return (
+          <VideoTraining
+            onComplete={() => {
+              setCurrentStep('POSTTEST');
+              setCurrentQuestionIndex(0);
+            }}
+            onBack={() => {
+              setCurrentStep('PRETEST');
+              setCurrentQuestionIndex(QUESTIONS.length - 1);
+            }}
+          />
+        );
+
+      case 'RESULTS':
+        return (
+          <ResultsScreen
+            participantId={participantId}
+            syncStatus={syncStatus}
+            errorMsg={errorMsg}
+            rawData={{
+              participantId,
+              demographics,
+              pretest: pretestAnswers,
+              posttest: posttestAnswers,
+              createdAt: new Date().toISOString()
+            }}
+            onRetrySync={() => {
+              handleSubmitSurvey({
+                participantId,
+                demographics,
+                pretest: pretestAnswers,
+                posttest: posttestAnswers,
+                createdAt: new Date().toISOString()
+              });
+            }}
+          />
+        );
+
+      default:
+        return <WelcomeScreen onStart={() => setCurrentStep('CONSENT')} />;
+    }
+  };
 
   return (
-    <div className="flex h-screen w-full bg-bg-app text-text-main transition-colors duration-300 overflow-hidden relative z-0">
-      {/* Sidebar Mobile Overlay */}
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsSidebarOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute left-0 top-0 bottom-0 w-[280px]"
-            >
-              <Sidebar
-                folders={folders}
-                activeFolderId={activeFolderId}
-                onSelectFolder={(id) => { setActiveFolderId(id); setIsSidebarOpen(false); }}
-                onAddFolder={() => { handleOpenFolderModal(); setIsSidebarOpen(false); }}
-                onSettingsOpen={() => { setIsSettingsOpen(true); setIsSidebarOpen(false); }}
-                onNewIdea={() => { setEditingIdea(null); setIsModalOpen(true); setIsSidebarOpen(false); }}
-                onDropIdea={(ideaId, destFolderId) => {
-                  updateIdea(ideaId, { folderId: destFolderId });
-                  showToast('Idea movida correctamente');
-                }}
-                onRenameFolder={(folder) => { handleOpenFolderModal(folder); setIsSidebarOpen(false); }}
-                onDeleteFolder={(id) => { handleDeleteFolder(id); setIsSidebarOpen(false); }}
-                onTrashOpen={() => { setIsTrashOpen(true); setIsSidebarOpen(false); }}
-                trashCount={trashedIdeas.length}
-              />
-            </motion.div>
+    <div className="min-h-screen bg-bg-app text-text-main flex flex-col font-sans transition-colors duration-300">
+      {/* Header global minimalista */}
+      <header className="sticky top-0 z-40 bg-card/85 backdrop-blur-md border-b border-border/50 py-3.5 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-lg">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <span className="font-extrabold text-sm md:text-base tracking-tight text-text-main">
+              Estudio Académico IA
+            </span>
           </div>
-        )}
-      </AnimatePresence>
 
-      <div className="hidden lg:flex">
-        <Sidebar
-          folders={folders}
-          activeFolderId={activeFolderId}
-          onSelectFolder={setActiveFolderId}
-          onAddFolder={() => handleOpenFolderModal()}
-          onSettingsOpen={() => setIsSettingsOpen(true)}
-          onNewIdea={() => { setEditingIdea(null); setIsModalOpen(true); }}
-          onDropIdea={(ideaId, destFolderId) => {
-            updateIdea(ideaId, { folderId: destFolderId });
-            showToast('Idea movida correctamente');
-          }}
-          onRenameFolder={handleOpenFolderModal}
-          onDeleteFolder={handleDeleteFolder}
-          onTrashOpen={() => setIsTrashOpen(true)}
-          trashCount={trashedIdeas.length}
-        />
-      </div>
-
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-20 lg:pb-0">
-        <TopBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          filter={filter}
-          onFilterChange={setFilter}
-          isDarkMode={isDarkMode}
-          onToggleDarkMode={toggleDarkMode}
-          onLogout={handleLogout}
-          onSettingsOpen={() => setIsSettingsOpen(true)}
-          user={user}
-        />
-
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          {ideasLoading ? (
-            <div className="h-full flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-            </div>
-          ) : (
-            <>
-              <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 text-primary font-bold text-sm uppercase tracking-widest mb-2 opacity-80">
-                <div className="w-8 h-[2px] bg-primary/30 rounded-full"></div>
-                {activeFolderId === null ? 'Vista general' : activeFolderName}
-              </div>
-              <h1 className="text-4xl font-extrabold text-text-main tracking-tight">
-                {activeFolderId === null ? 'Todas las Ideas' : 'Mis Ideas'}
-              </h1>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              {/* Selector de orden — solo visible en vista general */}
-              {activeFolderId === null && (
-                <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1">
-                  <button
-                    onClick={() => setSortBy('createdAt')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      sortBy === 'createdAt'
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-text-muted hover:text-text-main'
-                    }`}
-                  >
-                    Creación
-                  </button>
-                  <button
-                    onClick={() => setSortBy('updatedAt')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      sortBy === 'updatedAt'
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-text-muted hover:text-text-main'
-                    }`}
-                  >
-                    Modificación
-                  </button>
-                </div>
-              )}
-              <p className="text-text-muted font-medium bg-card px-4 py-2 rounded-xl border border-border shadow-sm">
-                <span className="text-primary font-bold">{filteredIdeas.length}</span> {filteredIdeas.length === 1 ? 'idea' : 'ideas'} en total
-              </p>
-            </div>
-          </header>
-
-          <AnimatePresence mode="popLayout">
-            {filteredIdeas.length > 0 ? (
-              <motion.div 
-                layout
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+          <div className="flex items-center gap-3">
+            {/* Botón de reinicio si no estamos en Welcome ni en Results */}
+            {!isAdminView && currentStep !== 'WELCOME' && currentStep !== 'RESULTS' && (
+              <button
+                type="button"
+                onClick={handleResetSurvey}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-red-500 transition-all cursor-pointer"
+                title="Reiniciar encuesta"
               >
-                {filteredIdeas.map((idea) => (
-                  <IdeaCard
-                    key={idea.id}
-                    idea={idea}
-                    folderName={activeFolderName}
-                    onToggleComplete={(id) => updateIdea(id, { completed: !idea.completed })}
-                    onEdit={handleEditIdea}
-                    onDelete={handleDeleteIdea}
-                    onDragStart={() => setDraggedIdeaId(idea.id)}
-                  />
-                ))}
-              </motion.div>
-            ) : (
-              <EmptyState 
-                type={searchQuery ? 'search' : 'ideas'} 
-                onAction={() => setIsModalOpen(true)}
-              />
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Reiniciar</span>
+              </button>
             )}
-          </AnimatePresence>
-            </>
-          )}
-        </main>
-      </div>
 
-      <BottomNav 
-        activeFolderId={activeFolderId}
-        onSelectFolder={setActiveFolderId}
-        onNewIdea={() => { setEditingIdea(null); setIsModalOpen(true); }}
-        onSidebarToggle={() => setIsSidebarOpen(true)}
-        onSettingsOpen={() => setIsSettingsOpen(true)}
-        onTrashOpen={() => setIsTrashOpen(true)}
-        trashCount={trashedIdeas.length}
-      />
+            {/* Toggle de Modo Oscuro */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-xl bg-surface hover:bg-surface-hover border border-border text-text-muted hover:text-text-main transition-colors cursor-pointer"
+              aria-label="Alternar modo oscuro"
+            >
+              {isDarkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      </header>
 
-      <IdeaModal
-        isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setEditingIdea(null); }}
-        folders={folders}
-        activeFolderId={activeFolderId}
-        initialIdea={editingIdea}
-        onSave={handleCreateIdea}
-      />
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col justify-center py-6 md:py-10">
+        {renderStepContent()}
+      </main>
 
-      <FolderModal
-        isOpen={isFolderModalOpen}
-        onClose={() => { setIsFolderModalOpen(false); setEditingFolder(null); }}
-        onSubmit={handleFolderSubmit}
-        initialFolder={editingFolder}
-      />
-
-      <TrashModal
-        isOpen={isTrashOpen}
-        onClose={() => setIsTrashOpen(false)}
-        trashedIdeas={trashedIdeas}
-        folders={folders}
-        onRestore={async (id) => {
-          try { await restoreIdea(id); showToast('Idea restaurada ✅'); }
-          catch { showToast('❌ Error al restaurar la idea', 'error'); }
-        }}
-        onPermanentDelete={async (id) => {
-          try { await permanentDeleteIdea(id); showToast('Idea eliminada permanentemente', 'info'); }
-          catch { showToast('❌ Error al eliminar', 'error'); }
-        }}
-        onEmptyTrash={async () => {
-          try { await emptyTrash(); showToast('Papelera vaciada', 'info'); }
-          catch { showToast('❌ Error al vaciar la papelera', 'error'); }
-        }}
-      />
-
-      <SettingsModal 
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        user={user}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
-        onLogout={handleLogout}
-        folders={folders}
-        onRenameFolder={handleOpenFolderModal}
-        onDeleteFolder={handleDeleteFolder}
-        onNewFolder={() => handleOpenFolderModal()}
-      />
-
-      <AnimatePresence>
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
-        )}
-      </AnimatePresence>
+      {/* Footer minimalista */}
+      <footer className="py-4 border-t border-border/50 text-center text-xs text-text-muted bg-card/50">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span>&copy; {new Date().getFullYear()} Cuestionario Académico de Investigación sobre IA.</span>
+          <div className="flex gap-4">
+            <span className="hover:text-text-main transition-colors">Privacidad garantizada</span>
+            <span className="hover:text-text-main transition-colors">Respuestas Anónimas</span>
+            <button
+              type="button"
+              onClick={() => setIsAdminView(!isAdminView)}
+              className="text-primary hover:underline cursor-pointer font-bold transition-colors"
+            >
+              {isAdminView ? 'Volver al Cuestionario' : 'Área del Administrador'}
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
