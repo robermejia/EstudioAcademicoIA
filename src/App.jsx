@@ -397,7 +397,7 @@ function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col justify-center py-6 md:py-10">
+      <main className="flex-1 flex flex-col justify-start md:justify-center py-6 md:py-10">
         {renderStepContent()}
       </main>
 
