@@ -28,11 +28,16 @@
 
 @layer base {
   html, body {
-    @apply bg-bg-app text-text-main antialiased selection:bg-primary/20;
+    @apply bg-bg-app text-text-main;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
     padding: 0;
     min-height: 100vh;
+    /* Prevent iOS bounce scroll from interfering with touch events */
+    -webkit-overflow-scrolling: auto;
+    overscroll-behavior: none;
   }
   
   #root {
@@ -40,11 +45,29 @@
     display: flex;
     flex-direction: column;
   }
+
+  /* Fix touch responsiveness on all interactive elements for iOS/Android */
+  button,
+  input,
+  select,
+  textarea,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Ensure icon spans inside inputs never block touch events */
+  input + span,
+  span + input,
+  .input-icon {
+    pointer-events: none;
+  }
 }
 
 @layer components {
   .glass {
-    @apply bg-card/70 backdrop-blur-md border border-border/50;
+    @apply bg-card/70 border border-border/50;
   }
   
   .card-shadow {
@@ -66,7 +89,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-full hover:bg-text-muted/30 transition-colors;
+  @apply bg-border rounded-full;
 }
 
 /* Responsividad para Iframe de YouTube */

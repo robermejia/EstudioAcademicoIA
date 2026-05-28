@@ -141,7 +141,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-text-muted block">Correo Electrónico Admin</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted pointer-events-none">
                   <Mail className="w-4 h-4" />
                 </span>
                 <input
@@ -158,7 +158,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-text-muted block">Contraseña</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted pointer-events-none">
                   <Lock className="w-4 h-4" />
                 </span>
                 <input
@@ -175,7 +175,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-text-muted block">Confirmar Contraseña</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted pointer-events-none">
                   <Lock className="w-4 h-4" />
                 </span>
                 <input
@@ -220,7 +220,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-text-muted block">Correo Electrónico</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted pointer-events-none">
                   <Mail className="w-4 h-4" />
                 </span>
                 <input
@@ -237,7 +237,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-text-muted block">Contraseña</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted pointer-events-none">
                   <Lock className="w-4 h-4" />
                 </span>
                 <input

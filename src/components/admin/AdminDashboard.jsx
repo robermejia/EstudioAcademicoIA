@@ -362,7 +362,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
               </h2>
               
               <div className="relative w-full sm:w-72">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-text-muted pointer-events-none">
                   <Search className="w-4 h-4" />
                 </span>
                 <input
