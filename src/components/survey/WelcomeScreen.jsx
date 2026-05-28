@@ -2,11 +2,8 @@ import { ArrowRight, GraduationCap, Award, BookOpen } from 'lucide-react';
 
 export function WelcomeScreen({ onStart }) {
   return (
-    <div className="max-w-4xl mx-auto flex flex-col items-center text-center justify-center min-h-[70vh] px-4">
-      <div className="w-full bg-card border border-border/80 rounded-3xl p-8 md:p-12 shadow-sm card-shadow relative overflow-hidden transition-all duration-300">
-        {/* Decoraciones de fondo */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-sky-400/10 rounded-full blur-3xl" />
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="w-full bg-card border border-border/80 rounded-3xl p-6 md:p-12 shadow-sm card-shadow text-center">
 
         <div className="flex justify-center mb-6">
           <div className="p-4 bg-primary/10 text-primary dark:bg-primary/20 rounded-2xl">
