@@ -79,7 +79,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <div
-        className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow transition-all duration-300"
+        className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow"
       >
         <div className="flex items-center gap-3 mb-8">
           <div className="p-2.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-xl">
@@ -129,7 +129,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
                   key={genderOption}
                   type="button"
                   onClick={() => handleChange('gender', genderOption)}
-                  className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all cursor-pointer ${
+                  className={`py-3 px-4 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${
                     formData.gender === genderOption
                       ? 'bg-primary border-primary text-white shadow-sm'
                       : 'bg-surface border-border hover:border-text-muted/40 text-text-main'
@@ -158,7 +158,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
                   key={option.value}
                   type="button"
                   onClick={() => handleChange('hasUsedAI', option.value)}
-                  className={`py-3.5 px-4 rounded-xl border text-sm font-medium transition-all cursor-pointer ${
+                  className={`py-3.5 px-4 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${
                     formData.hasUsedAI === option.value
                       ? 'bg-primary border-primary text-white shadow-sm'
                       : 'bg-surface border-border hover:border-text-muted/40 text-text-main'
@@ -190,7 +190,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
                   type="button"
                   disabled={option.disabled}
                   onClick={() => handleChange('mostUsedTool', option.value)}
-                  className={`py-3.5 px-3 rounded-xl border text-sm font-medium transition-all ${
+                  className={`py-3.5 px-3 rounded-xl border text-sm font-medium transition-colors ${
                     option.disabled 
                       ? 'opacity-40 cursor-not-allowed bg-border/20 border-border text-text-muted'
                       : formData.mostUsedTool === option.value
@@ -219,7 +219,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl transition-all shadow-sm hover:shadow cursor-pointer"
+              className="flex items-center gap-1.5 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-sm hover:shadow cursor-pointer"
             >
               Iniciar Pretest
               <ArrowRight className="w-4 h-4" />

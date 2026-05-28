@@ -358,7 +358,7 @@ function App() {
   return (
     <div className="min-h-screen bg-bg-app text-text-main flex flex-col font-sans transition-colors duration-300">
       {/* Header global minimalista */}
-      <header className="sticky top-0 z-40 bg-card border-b border-border/50 py-3 px-4 md:px-8">
+      <header className="relative md:sticky top-0 z-40 bg-card border-b border-border/50 py-3 px-4 md:px-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-lg shrink-0">

@@ -55,7 +55,7 @@ export function ConsentForm({ onAccept, onBack }) {
         </div>
       ) : (
         <div
-          className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow transition-all duration-300"
+          className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-xl">
@@ -100,7 +100,7 @@ export function ConsentForm({ onAccept, onBack }) {
                 <button
                   type="button"
                   onClick={() => setIsAdult('yes')}
-                  className={`w-full py-3.5 rounded-xl border font-semibold text-center transition-all cursor-pointer ${
+                  className={`w-full py-3.5 rounded-xl border font-semibold text-center cursor-pointer transition-colors ${
                     isAdult === 'yes'
                       ? 'bg-primary border-primary text-white shadow-sm'
                       : 'bg-card border-border hover:border-text-muted text-text-main'
@@ -111,7 +111,7 @@ export function ConsentForm({ onAccept, onBack }) {
                 <button
                   type="button"
                   onClick={() => setIsAdult('no')}
-                  className={`w-full py-3.5 rounded-xl border font-semibold text-center transition-all cursor-pointer ${
+                  className={`w-full py-3.5 rounded-xl border font-semibold text-center cursor-pointer transition-colors ${
                     isAdult === 'no'
                       ? 'bg-red-500 border-red-500 text-white shadow-sm'
                       : 'bg-card border-border hover:border-text-muted text-text-main'
@@ -149,7 +149,7 @@ export function ConsentForm({ onAccept, onBack }) {
               <button
                 type="submit"
                 disabled={!acceptedTerms || isAdult !== 'yes'}
-                className={`flex items-center gap-1.5 px-6 py-3 font-semibold rounded-xl text-white transition-all shadow-sm ${
+                className={`flex items-center gap-1.5 px-6 py-3 font-semibold rounded-xl text-white shadow-sm ${
                   acceptedTerms && isAdult === 'yes'
                     ? 'bg-primary hover:bg-primary-hover hover:shadow cursor-pointer'
                     : 'bg-text-muted/30 cursor-not-allowed opacity-60'

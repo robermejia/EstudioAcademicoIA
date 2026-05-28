@@ -104,7 +104,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
   return (
     <div className="max-w-md w-full mx-auto px-4 py-8">
       <div
-        className="bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-sm card-shadow relative overflow-hidden transition-all duration-300"
+        className="bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-sm card-shadow relative overflow-hidden"
       >
         {/* Decoración de seguridad */}
         <div className="absolute top-0 inset-x-0 h-1.5 bg-primary" />
@@ -192,7 +192,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 px-4 text-white text-sm font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 ${
+              className={`w-full py-3 px-4 text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-1.5 ${
                 loading 
                   ? 'bg-primary/50 cursor-not-allowed' 
                   : 'bg-primary hover:bg-primary-hover hover:shadow cursor-pointer'
@@ -254,7 +254,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 px-4 text-white text-sm font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 ${
+              className={`w-full py-3 px-4 text-white text-sm font-semibold rounded-xl shadow-sm flex items-center justify-center gap-1.5 ${
                 loading 
                   ? 'bg-primary/50 cursor-not-allowed' 
                   : 'bg-primary hover:bg-primary-hover hover:shadow cursor-pointer'

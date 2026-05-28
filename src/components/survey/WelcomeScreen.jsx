@@ -45,7 +45,7 @@ export function WelcomeScreen({ onStart }) {
 
         <button
           onClick={onStart}
-          className="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white font-semibold text-base rounded-2xl transition-all shadow-md hover:shadow-lg cursor-pointer"
+          className="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-hover text-white font-semibold text-base rounded-2xl shadow-md hover:shadow-lg cursor-pointer"
         >
           Iniciar Cuestionario
           <ArrowRight className="w-5 h-5" />

@@ -35,9 +35,6 @@
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    /* Prevent iOS bounce scroll from interfering with touch events */
-    -webkit-overflow-scrolling: auto;
-    overscroll-behavior: none;
   }
   
   #root {
@@ -46,22 +43,14 @@
     flex-direction: column;
   }
 
-  /* Fix touch responsiveness on all interactive elements for iOS/Android */
+  /* Fix touch responsiveness highlighted taps for iOS/Android */
   button,
   input,
   select,
   textarea,
   a,
   [role="button"] {
-    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Ensure icon spans inside inputs never block touch events */
-  input + span,
-  span + input,
-  .input-icon {
-    pointer-events: none;
   }
 }
 
