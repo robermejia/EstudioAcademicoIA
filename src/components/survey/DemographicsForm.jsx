@@ -152,7 +152,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
             <label className="block text-sm font-semibold text-text-main">
               3. ¿Ha utilizado herramientas de IA anteriormente? *
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { label: 'Sí, las he utilizado', value: 'yes' },
                 { label: 'No, nunca las he utilizado', value: 'no' }

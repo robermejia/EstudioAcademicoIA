@@ -68,3 +68,9 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-border rounded-full hover:bg-text-muted/30 transition-colors;
 }
+
+/* Responsividad para Iframe de YouTube */
+iframe#youtube-player, iframe {
+  width: 100% !important;
+  height: 100% !important;
+}

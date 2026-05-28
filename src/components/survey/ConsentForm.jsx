@@ -39,21 +39,21 @@ export function ConsentForm({ onAccept, onBack }) {
               Lo sentimos, pero de acuerdo con las normativas éticas de investigación académica y protección de datos, este estudio está dirigido exclusivamente a personas mayores de edad (18 años o más). Agradecemos sinceramente su interés en participar.
             </p>
 
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setIsAdult(null);
                   setAcceptedTerms(false);
                 }}
-                className="px-6 py-3 bg-surface hover:bg-surface-hover text-text-main font-semibold rounded-xl border border-border transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 bg-surface hover:bg-surface-hover text-text-main font-semibold rounded-xl border border-border transition-colors cursor-pointer"
               >
                 Cambiar Respuesta
               </button>
               <button
                 type="button"
                 onClick={onBack}
-                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors cursor-pointer"
               >
                 Volver al Inicio
               </button>
@@ -106,11 +106,11 @@ export function ConsentForm({ onAccept, onBack }) {
                   <UserCheck className="w-4 h-4 text-primary" />
                   ¿Es usted mayor de edad? (18 años o más) *
                 </label>
-                <div className="flex gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setIsAdult('yes')}
-                    className={`flex-1 py-3.5 rounded-xl border font-semibold text-center transition-all cursor-pointer ${
+                    className={`w-full py-3.5 rounded-xl border font-semibold text-center transition-all cursor-pointer ${
                       isAdult === 'yes'
                         ? 'bg-primary border-primary text-white shadow-sm'
                         : 'bg-card border-border hover:border-text-muted text-text-main'
@@ -121,7 +121,7 @@ export function ConsentForm({ onAccept, onBack }) {
                   <button
                     type="button"
                     onClick={() => setIsAdult('no')}
-                    className={`flex-1 py-3.5 rounded-xl border font-semibold text-center transition-all cursor-pointer ${
+                    className={`w-full py-3.5 rounded-xl border font-semibold text-center transition-all cursor-pointer ${
                       isAdult === 'no'
                         ? 'bg-red-500 border-red-500 text-white shadow-sm'
                         : 'bg-card border-border hover:border-text-muted text-text-main'
