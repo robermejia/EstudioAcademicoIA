@@ -28,8 +28,8 @@ export function LikertCard({ question, selectedValue, onChange }) {
         </h3>
       </div>
 
-      {/* Grid para opciones (Mobile: vertical, Desktop: horizontal) */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4 mt-6">
+      {/* Grid para opciones (Mobile/Tablet: vertical, Desktop: horizontal) */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 lg:gap-4 mt-6">
         {SCALE_OPTIONS.map((option) => {
           const isSelected = selectedValue === option.value;
           const OptionIcon = option.icon;
@@ -39,22 +39,22 @@ export function LikertCard({ question, selectedValue, onChange }) {
               key={option.value}
               type="button"
               onClick={() => onChange(option.value)}
-              className={`flex md:flex-col items-center justify-start md:justify-center p-4 rounded-2xl border text-left md:text-center transition-all duration-200 cursor-pointer outline-none focus:ring-2 focus:ring-offset-2 ${
+              className={`flex lg:flex-col items-center justify-start lg:justify-center p-3.5 lg:p-4 rounded-2xl border text-left lg:text-center transition-all duration-200 cursor-pointer outline-none focus:ring-2 focus:ring-offset-2 ${
                 isSelected
                   ? option.activeClass + ' scale-[1.02] shadow-md shadow-black/5 dark:shadow-none'
                   : 'bg-surface border-border hover:border-text-muted/40 ' + option.color
               }`}
             >
-              <div className={`p-2.5 rounded-full md:mb-3 mr-4 md:mr-0 transition-colors ${
+              <div className={`p-2.5 rounded-full lg:mb-3 mr-4 lg:mr-0 transition-colors ${
                 isSelected ? 'bg-white/20 text-white' : 'bg-card'
               }`}>
                 <OptionIcon className="w-5 h-5" />
               </div>
-              <div className="flex flex-col md:items-center">
-                <span className={`text-lg font-bold md:hidden ${isSelected ? 'text-white' : 'text-text-main'}`}>
+              <div className="flex flex-col lg:items-center">
+                <span className={`text-lg font-bold lg:hidden ${isSelected ? 'text-white' : 'text-text-main'}`}>
                   {option.value}
                 </span>
-                <span className={`text-xs md:text-sm font-semibold tracking-wide ${
+                <span className={`text-xs lg:text-sm font-semibold tracking-wide ${
                   isSelected ? 'text-white' : 'text-text-muted dark:text-slate-300'
                 }`}>
                   {option.label}

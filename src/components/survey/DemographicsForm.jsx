@@ -126,7 +126,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
             <label className="block text-sm font-semibold text-text-main">
               2. Sexo *
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {['Masculino', 'Femenino', 'Otro'].map((genderOption) => (
                 <button
                   key={genderOption}

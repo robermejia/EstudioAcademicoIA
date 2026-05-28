@@ -200,11 +200,11 @@ export function AdminDashboard({ onLogoutSuccess }) {
           </h1>
         </div>
         
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto mt-4 md:mt-0">
           <button
             type="button"
             onClick={fetchResponses}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-surface hover:bg-surface-hover border border-border text-text-main text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-surface hover:bg-surface-hover border border-border text-text-main text-xs font-semibold rounded-xl transition-colors cursor-pointer flex-1 sm:flex-initial"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Actualizar
@@ -214,7 +214,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
             type="button"
             onClick={handleExportCSV}
             disabled={totalParticipants === 0}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-white text-xs font-semibold rounded-xl transition-all shadow-sm ${
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 text-white text-xs font-semibold rounded-xl transition-all shadow-sm flex-1 sm:flex-initial ${
               totalParticipants === 0 
                 ? 'bg-text-muted/30 cursor-not-allowed opacity-50' 
                 : 'bg-emerald-600 hover:bg-emerald-700 hover:shadow cursor-pointer'
@@ -227,7 +227,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer ml-auto md:ml-0"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex-1 sm:flex-initial"
           >
             <LogOut className="w-3.5 h-3.5" />
             Salir
