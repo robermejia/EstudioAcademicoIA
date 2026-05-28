@@ -359,24 +359,24 @@ function App() {
   return (
     <div className="min-h-screen bg-bg-app text-text-main flex flex-col font-sans transition-colors duration-300">
       {/* Header global minimalista */}
-      <header className="sticky top-0 z-40 bg-card/85 backdrop-blur-md border-b border-border/50 py-3.5 px-4 md:px-8">
+      <header className="sticky top-0 z-40 bg-card/85 backdrop-blur-md border-b border-border/50 py-3 px-4 md:px-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-lg">
-              <GraduationCap className="w-5 h-5" />
+            <div className="p-1.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-lg shrink-0">
+              <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="font-extrabold text-sm md:text-base tracking-tight text-text-main">
+            <span className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-text-main">
               Estudio Académico IA
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Botón de reinicio si no estamos en Welcome ni en Results */}
             {!isAdminView && currentStep !== 'WELCOME' && currentStep !== 'RESULTS' && (
               <button
                 type="button"
                 onClick={handleResetSurvey}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-red-500 transition-all cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-red-500 transition-all cursor-pointer"
                 title="Reiniciar encuesta"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -402,12 +402,14 @@ function App() {
       </main>
 
       {/* Footer minimalista */}
-      <footer className="py-4 border-t border-border/50 text-center text-xs text-text-muted bg-card/50">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <footer className="py-4 border-t border-border/50 text-center text-[10px] sm:text-xs text-text-muted bg-card/50">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
           <span>&copy; {new Date().getFullYear()} Cuestionario Académico de Investigación sobre IA.</span>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 mt-1 sm:mt-0">
             <span className="hover:text-text-main transition-colors">Privacidad garantizada</span>
+            <span className="w-1 h-1 bg-border rounded-full hidden sm:inline" />
             <span className="hover:text-text-main transition-colors">Respuestas Anónimas</span>
+            <span className="w-1 h-1 bg-border rounded-full hidden sm:inline" />
             <button
               type="button"
               onClick={() => setIsAdminView(!isAdminView)}
