@@ -1,10 +1,8 @@
-import { motion } from 'framer-motion';
-
 export function ProgressBar({ current, total, phase }) {
   const percentage = Math.min(100, Math.max(0, (current / total) * 100));
 
   return (
-    <div className="w-full bg-card border border-border/80 rounded-2xl p-4 shadow-sm backdrop-blur-md">
+    <div className="w-full bg-card border border-border/80 rounded-2xl p-4 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
@@ -24,13 +22,11 @@ export function ProgressBar({ current, total, phase }) {
       </div>
 
       <div className="w-full h-2.5 bg-surface rounded-full overflow-hidden border border-border/40">
-        <motion.div
-          className={`h-full rounded-full ${
+        <div
+          className={`h-full rounded-full transition-all duration-500 ease-out ${
             phase === 'Pretest' ? 'bg-primary' : 'bg-emerald-500'
           }`}
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          style={{ width: `${percentage}%` }}
         />
       </div>
     </div>

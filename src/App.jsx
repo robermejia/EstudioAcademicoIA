@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Sun, Moon, RotateCcw, GraduationCap } from 'lucide-react';
 
 // Cargar Componentes del Cuestionario
@@ -273,14 +272,14 @@ function App() {
               phase={currentStep}
             />
             
-            <AnimatePresence mode="wait">
+            <div>
               <LikertCard
                 key={currentQuestion.id}
                 question={currentQuestion}
                 selectedValue={answers[currentQuestion.id]}
                 onChange={handleAnswerSelect}
               />
-            </AnimatePresence>
+            </div>
 
             {/* Controles del Cuestionario */}
             <div className="flex justify-between items-center pt-4">
