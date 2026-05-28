@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { User, ClipboardList, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ClipboardList, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export function DemographicsForm({ onSave, onBack, initialData }) {
   const [formData, setFormData] = useState(
@@ -79,10 +78,8 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow"
+      <div
+        className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow transition-all duration-300"
       >
         <div className="flex items-center gap-3 mb-8">
           <div className="p-2.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-xl">
@@ -229,7 +226,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
             </button>
           </div>
         </form>
-      </motion.div>
+      </div>
     </div>
   );
 }

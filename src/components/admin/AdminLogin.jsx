@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Mail, ArrowLeft, LogIn, UserPlus, AlertCircle, ShieldAlert } from 'lucide-react';
+import { Lock, Mail, ArrowLeft, LogIn, UserPlus, AlertCircle } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { checkIsAdmin, hasAdmins, registerFirstAdmin } from '../../lib/surveyService';
@@ -104,10 +103,8 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
 
   return (
     <div className="max-w-md w-full mx-auto px-4 py-8">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-sm card-shadow relative overflow-hidden"
+      <div
+        className="bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-sm card-shadow relative overflow-hidden transition-all duration-300"
       >
         {/* Decoración de seguridad */}
         <div className="absolute top-0 inset-x-0 h-1.5 bg-primary" />
@@ -129,19 +126,14 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
         </p>
 
         {/* Mensaje de Error */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="flex items-start gap-2.5 p-3.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold mb-5 border border-red-500/20"
-            >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {error && (
+          <div
+            className="flex items-start gap-2.5 p-3.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold mb-5 border border-red-500/20"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
 
         {setupMode ? (
           /* Formulario de Registro Inicial */
@@ -297,7 +289,7 @@ export function AdminLogin({ onLoginSuccess, onBack }) {
             Volver al Cuestionario
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

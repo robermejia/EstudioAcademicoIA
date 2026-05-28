@@ -1,15 +1,9 @@
-import { motion } from 'framer-motion';
 import { ArrowRight, GraduationCap, Award, BookOpen } from 'lucide-react';
 
 export function WelcomeScreen({ onStart }) {
   return (
     <div className="max-w-4xl mx-auto flex flex-col items-center text-center justify-center min-h-[70vh] px-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full bg-card border border-border/80 rounded-3xl p-8 md:p-12 shadow-sm card-shadow relative overflow-hidden"
-      >
+      <div className="w-full bg-card border border-border/80 rounded-3xl p-8 md:p-12 shadow-sm card-shadow relative overflow-hidden transition-all duration-300">
         {/* Decoraciones de fondo */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-sky-400/10 rounded-full blur-3xl" />
@@ -52,16 +46,14 @@ export function WelcomeScreen({ onStart }) {
           </div>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+        <button
           onClick={onStart}
-          className="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-hover text-white font-semibold text-base rounded-2xl transition-all shadow-md hover:shadow-lg cursor-pointer"
+          className="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-hover active:scale-[0.98] text-white font-semibold text-base rounded-2xl transition-all shadow-md hover:shadow-lg cursor-pointer"
         >
           Iniciar Cuestionario
           <ArrowRight className="w-5 h-5" />
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
     </div>
   );
 }

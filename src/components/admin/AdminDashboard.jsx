@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { 
   Users, BarChart3, Database, Download, LogOut, Search, 
   ChevronRight, Calendar, Info, RefreshCw, CheckCircle, GraduationCap
@@ -325,11 +325,9 @@ export function AdminDashboard({ onLogoutSuccess }) {
                             <span className="font-bold text-text-main">{preAvg} / 5.0</span>
                           </div>
                           <div className="w-full h-3 bg-surface rounded-full overflow-hidden border border-border/40">
-                            <motion.div
-                              className="h-full bg-slate-400 dark:bg-slate-500 rounded-full"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${prePct}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
+                            <div
+                              className="h-full bg-slate-400 dark:bg-slate-500 rounded-full transition-all duration-1000 ease-out"
+                              style={{ width: `${prePct}%` }}
                             />
                           </div>
                         </div>
@@ -341,11 +339,9 @@ export function AdminDashboard({ onLogoutSuccess }) {
                             <span className={`font-bold ${dim.text}`}>{postAvg} / 5.0</span>
                           </div>
                           <div className="w-full h-3 bg-surface rounded-full overflow-hidden border border-border/40">
-                            <motion.div
-                              className={`h-full ${dim.color} rounded-full`}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${postPct}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
+                            <div
+                              className={`h-full ${dim.color} rounded-full transition-all duration-1000 ease-out`}
+                              style={{ width: `${postPct}%` }}
                             />
                           </div>
                         </div>
@@ -438,97 +434,89 @@ export function AdminDashboard({ onLogoutSuccess }) {
       )}
 
       {/* Modal de Detalles del Participante */}
-      <AnimatePresence>
-        {selectedResponse && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedResponse(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-xs"
-            />
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative bg-card border border-border rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6 md:p-8 shadow-xl z-10"
-            >
-              <div className="flex justify-between items-start gap-4 mb-6">
-                <div className="min-w-0">
-                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider block truncate">
-                    ID Registro: {selectedResponse.id}
-                  </span>
-                  <h3 className="text-lg sm:text-xl font-bold text-text-main truncate">
-                    Participante: <span className="font-mono text-primary select-all">{selectedResponse.participantId}</span>
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setSelectedResponse(null)}
-                  className="p-1.5 px-3 hover:bg-surface border border-border rounded-lg text-text-muted hover:text-text-main text-xs transition-colors cursor-pointer shrink-0"
-                >
-                  Cerrar
-                </button>
+      {selectedResponse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            onClick={() => setSelectedResponse(null)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+          />
+          
+          <div
+            className="relative bg-card border border-border rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6 md:p-8 shadow-xl z-10 transition-all duration-300"
+          >
+            <div className="flex justify-between items-start gap-4 mb-6">
+              <div className="min-w-0">
+                <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider block truncate">
+                  ID Registro: {selectedResponse.id}
+                </span>
+                <h3 className="text-lg sm:text-xl font-bold text-text-main truncate">
+                  Participante: <span className="font-mono text-primary select-all">{selectedResponse.participantId}</span>
+                </h3>
               </div>
+              <button
+                onClick={() => setSelectedResponse(null)}
+                className="p-1.5 px-3 hover:bg-surface border border-border rounded-lg text-text-muted hover:text-text-main text-xs transition-colors cursor-pointer shrink-0"
+              >
+                Cerrar
+              </button>
+            </div>
 
-              {/* Información Demográfica */}
-              <div className="bg-surface border border-border/50 rounded-2xl p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                <div>
-                  <span className="text-text-muted block">Edad:</span>
-                  <span className="font-bold text-text-main">{selectedResponse.demographics?.age} años</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Sexo:</span>
-                  <span className="font-bold text-text-main">{selectedResponse.demographics?.gender}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Uso Previo IA:</span>
-                  <span className="font-bold text-text-main">{selectedResponse.demographics?.hasUsedAI === 'yes' ? 'Sí' : 'No'}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted block">Herramienta:</span>
-                  <span className="font-bold text-text-main">{selectedResponse.demographics?.mostUsedTool}</span>
-                </div>
+            {/* Información Demográfica */}
+            <div className="bg-surface border border-border/50 rounded-2xl p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+              <div>
+                <span className="text-text-muted block">Edad:</span>
+                <span className="font-bold text-text-main">{selectedResponse.demographics?.age} años</span>
               </div>
+              <div>
+                <span className="text-text-muted block">Sexo:</span>
+                <span className="font-bold text-text-main">{selectedResponse.demographics?.gender}</span>
+              </div>
+              <div>
+                <span className="text-text-muted block">Uso Previo IA:</span>
+                <span className="font-bold text-text-main">{selectedResponse.demographics?.hasUsedAI === 'yes' ? 'Sí' : 'No'}</span>
+              </div>
+              <div>
+                <span className="text-text-muted block">Herramienta:</span>
+                <span className="font-bold text-text-main">{selectedResponse.demographics?.mostUsedTool}</span>
+              </div>
+            </div>
 
-              {/* Respuestas comparativas de las preguntas */}
-              <div className="space-y-4">
-                <h4 className="font-bold text-sm text-text-main border-b border-border/60 pb-2">
-                  Puntuaciones de Preguntas (Pretest vs. Posttest)
-                </h4>
-                
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                  {QUESTIONS.map((q) => {
-                    const preVal = selectedResponse.pretest?.[q.id] || '-';
-                    const postVal = selectedResponse.posttest?.[q.id] || '-';
-                    
-                    return (
-                      <div key={q.id} className="text-xs flex flex-col sm:flex-row justify-between gap-2 py-2 border-b border-border/30 last:border-0">
-                        <div className="sm:max-w-md">
-                          <span className="text-[9px] font-semibold text-primary/70 block uppercase tracking-wider">{q.dimension}</span>
-                          <span className="text-text-main font-medium">{q.text}</span>
-                        </div>
-                        <div className="flex gap-4 shrink-0 sm:self-center font-semibold">
-                          <span className="text-text-muted">Pre: <span className="text-text-main font-bold bg-surface px-2 py-0.5 rounded border border-border">{preVal}</span></span>
-                          <span className="text-text-muted">Post: <span className="text-primary font-bold bg-primary/10 px-2 py-0.5 rounded border border-primary/20">{postVal}</span></span>
-                        </div>
+            {/* Respuestas comparativas de las preguntas */}
+            <div className="space-y-4">
+              <h4 className="font-bold text-sm text-text-main border-b border-border/60 pb-2">
+                Puntuaciones de Preguntas (Pretest vs. Posttest)
+              </h4>
+              
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                {QUESTIONS.map((q) => {
+                  const preVal = selectedResponse.pretest?.[q.id] || '-';
+                  const postVal = selectedResponse.posttest?.[q.id] || '-';
+                  
+                  return (
+                    <div key={q.id} className="text-xs flex flex-col sm:flex-row justify-between gap-2 py-2 border-b border-border/30 last:border-0">
+                      <div className="sm:max-w-md">
+                        <span className="text-[9px] font-semibold text-primary/70 block uppercase tracking-wider">{q.dimension}</span>
+                        <span className="text-text-main font-medium">{q.text}</span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="flex gap-4 shrink-0 sm:self-center font-semibold">
+                        <span className="text-text-muted">Pre: <span className="text-text-main font-bold bg-surface px-2 py-0.5 rounded border border-border">{preVal}</span></span>
+                        <span className="text-text-muted">Post: <span className="text-primary font-bold bg-primary/10 px-2 py-0.5 rounded border border-primary/20">{postVal}</span></span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+            </div>
 
-              {selectedResponse.systemInfo && (
-                <div className="mt-6 pt-4 border-t border-border/50 text-[10px] text-text-muted text-left flex items-center gap-1">
-                  <Info className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                  <span>Soporte: {selectedResponse.systemInfo.userAgent} ({selectedResponse.systemInfo.screenSize})</span>
-                </div>
-              )}
-            </motion.div>
+            {selectedResponse.systemInfo && (
+              <div className="mt-6 pt-4 border-t border-border/50 text-[10px] text-text-muted text-left flex items-center gap-1">
+                <Info className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                <span>Soporte: {selectedResponse.systemInfo.userAgent} ({selectedResponse.systemInfo.screenSize})</span>
+              </div>
+            )}
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

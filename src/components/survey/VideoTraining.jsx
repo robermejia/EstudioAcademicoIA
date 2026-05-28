@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Play, CheckCircle, Video, ArrowRight, AlertCircle, Info } from 'lucide-react';
 
 export function VideoTraining({ onComplete, onBack }) {
@@ -105,10 +104,8 @@ export function VideoTraining({ onComplete, onBack }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow text-center"
+      <div
+        className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow text-center transition-all duration-300"
       >
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className="p-2.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-xl">
@@ -218,7 +215,7 @@ export function VideoTraining({ onComplete, onBack }) {
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

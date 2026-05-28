@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { ThumbsDown, AlertCircle, HelpCircle, ThumbsUp, Heart } from 'lucide-react';
 
 const SCALE_OPTIONS = [
@@ -11,13 +10,8 @@ const SCALE_OPTIONS = [
 
 export function LikertCard({ question, selectedValue, onChange }) {
   return (
-    <motion.div
-      key={question.id}
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.3 }}
-      className="w-full bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-sm card-shadow"
+    <div
+      className="w-full bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-sm card-shadow transition-all duration-300 animate-fade-in"
     >
       <div className="mb-6">
         <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-sky-300 mb-3">
@@ -64,6 +58,6 @@ export function LikertCard({ question, selectedValue, onChange }) {
           );
         })}
       </div>
-    </motion.div>
+    </div>
   );
 }
