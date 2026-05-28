@@ -188,14 +188,14 @@ export function AdminDashboard({ onLogoutSuccess }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+    <div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-8 min-w-0">
       {/* Barra de cabecera del Admin */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-card border border-border/80 p-6 rounded-3xl shadow-sm">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-card border border-border/80 p-4 sm:p-6 rounded-3xl shadow-sm">
         <div>
           <span className="text-xs font-semibold text-primary uppercase tracking-widest block mb-1">
             Panel de Control Académico
           </span>
-          <h1 className="text-3xl font-extrabold text-text-main tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-text-main tracking-tight">
             Dashboard de Estadísticas
           </h1>
         </div>
@@ -247,52 +247,52 @@ export function AdminDashboard({ onLogoutSuccess }) {
         <>
           {/* Tarjetas KPI */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-              <div className="p-3.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-xl">
-                <Users className="w-6 h-6" />
+            <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-primary/10 text-primary dark:bg-primary/20 rounded-xl shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <span className="text-xs font-semibold text-text-muted block">Participantes</span>
-                <span className="text-2xl font-black text-text-main">{totalParticipants}</span>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-              <div className="p-3.5 bg-sky-500/10 text-sky-500 dark:bg-sky-500/20 rounded-xl">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-text-muted block">Edad Promedio</span>
-                <span className="text-2xl font-black text-text-main">{averageAge} años</span>
+              <div className="min-w-0">
+                <span className="text-xs font-semibold text-text-muted block truncate">Participantes</span>
+                <span className="text-xl sm:text-2xl font-black text-text-main">{totalParticipants}</span>
               </div>
             </div>
 
-            <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-              <div className="p-3.5 bg-indigo-500/10 text-indigo-500 dark:bg-indigo-500/20 rounded-xl">
-                <CheckCircle className="w-6 h-6" />
+            <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-sky-500/10 text-sky-500 dark:bg-sky-500/20 rounded-xl shrink-0">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <span className="text-xs font-semibold text-text-muted block">Uso Previo de IA</span>
-                <span className="text-2xl font-black text-text-main">{aiExperiencePercent}%</span>
+              <div className="min-w-0">
+                <span className="text-xs font-semibold text-text-muted block truncate">Edad Promedio</span>
+                <span className="text-xl sm:text-2xl font-black text-text-main truncate block">{averageAge} años</span>
               </div>
             </div>
 
-            <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-              <div className="p-3.5 bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 rounded-xl">
-                <Database className="w-6 h-6" />
+            <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-indigo-500/10 text-indigo-500 dark:bg-indigo-500/20 rounded-xl shrink-0">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <span className="text-xs font-semibold text-text-muted block">ChatGPT Favorito</span>
-                <span className="text-2xl font-black text-text-main">{getToolPercent('ChatGPT')}%</span>
+              <div className="min-w-0">
+                <span className="text-xs font-semibold text-text-muted block truncate">Uso Previo de IA</span>
+                <span className="text-xl sm:text-2xl font-black text-text-main">{aiExperiencePercent}%</span>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 rounded-xl shrink-0">
+                <Database className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-xs font-semibold text-text-muted block truncate">ChatGPT Favorito</span>
+                <span className="text-xl sm:text-2xl font-black text-text-main">{getToolPercent('ChatGPT')}%</span>
               </div>
             </div>
           </div>
 
           {/* Gráfico Comparativo Pretest vs Posttest */}
-          <div className="bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-sm">
+          <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
               <BarChart3 className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold text-text-main">
+              <h2 className="text-lg sm:text-xl font-bold text-text-main">
                 Efectividad: Comparativa Pretest vs. Posttest
               </h2>
             </div>
@@ -358,9 +358,9 @@ export function AdminDashboard({ onLogoutSuccess }) {
           </div>
 
           {/* Listado de Participantes */}
-          <div className="bg-card border border-border/80 rounded-3xl p-6 md:p-8 shadow-sm">
+          <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <h2 className="text-xl font-bold text-text-main flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-bold text-text-main flex items-center gap-2">
                 <Database className="w-5 h-5 text-primary" />
                 Registros de Participación
               </h2>
@@ -385,7 +385,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+                <table className="w-full min-w-[650px] text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-border/80 text-text-muted font-bold uppercase tracking-wider">
                       <th className="py-3 px-4">ID Participante</th>
@@ -453,20 +453,20 @@ export function AdminDashboard({ onLogoutSuccess }) {
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative bg-card border border-border rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 md:p-8 shadow-xl z-10"
+              className="relative bg-card border border-border rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6 md:p-8 shadow-xl z-10"
             >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider block">
+              <div className="flex justify-between items-start gap-4 mb-6">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider block truncate">
                     ID Registro: {selectedResponse.id}
                   </span>
-                  <h3 className="text-xl font-bold text-text-main">
+                  <h3 className="text-lg sm:text-xl font-bold text-text-main truncate">
                     Participante: <span className="font-mono text-primary select-all">{selectedResponse.participantId}</span>
                   </h3>
                 </div>
                 <button
                   onClick={() => setSelectedResponse(null)}
-                  className="p-1 px-2.5 hover:bg-surface border border-border rounded-lg text-text-muted hover:text-text-main text-xs transition-colors cursor-pointer"
+                  className="p-1.5 px-3 hover:bg-surface border border-border rounded-lg text-text-muted hover:text-text-main text-xs transition-colors cursor-pointer shrink-0"
                 >
                   Cerrar
                 </button>
