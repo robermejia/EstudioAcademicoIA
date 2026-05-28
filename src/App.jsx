@@ -359,7 +359,7 @@ function App() {
   return (
     <div className="min-h-screen bg-bg-app text-text-main flex flex-col font-sans transition-colors duration-300">
       {/* Header global minimalista */}
-      <header className="sticky top-0 z-40 bg-card/85 backdrop-blur-md border-b border-border/50 py-3 px-4 md:px-8">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-card/85 backdrop-blur-md border-b border-border/50 py-3 px-4 md:px-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-primary/10 text-primary dark:bg-primary/20 rounded-lg shrink-0">
@@ -397,7 +397,7 @@ function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col justify-start md:justify-center py-6 md:py-10">
+      <main className="flex-1 flex flex-col justify-start md:justify-center pt-16 pb-6 md:pt-20 md:pb-10">
         {renderStepContent()}
       </main>
 
