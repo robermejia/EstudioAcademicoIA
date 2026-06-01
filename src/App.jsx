@@ -94,6 +94,28 @@ function App() {
     return saved ? JSON.parse(saved) : false;
   });
 
+  // Estado para capturar errores en producción/móvil
+  const [runtimeErrors, setRuntimeErrors] = useState([]);
+
+  useEffect(() => {
+    const handleError = (message, source, lineno, colno, error) => {
+      const errStr = `${message} (${source.split('/').pop()}:${lineno}:${colno})`;
+      setRuntimeErrors(prev => [...new Set([...prev, errStr])]);
+      return false;
+    };
+    const handleRejection = (event) => {
+      const reason = event.reason;
+      const errStr = `Promesa rechazada: ${reason?.message || reason || 'Error desconocido'}`;
+      setRuntimeErrors(prev => [...new Set([...prev, errStr])]);
+    };
+    window.onerror = handleError;
+    window.addEventListener('unhandledrejection', handleRejection);
+    return () => {
+      window.onerror = null;
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
+  }, []);
+
   // Efecto: Manejo del Modo Oscuro
   useEffect(() => {
     if (isDarkMode) {
@@ -357,6 +379,13 @@ function App() {
 
   return (
     <div className="min-h-screen bg-bg-app text-text-main flex flex-col font-sans transition-colors duration-300">
+      {runtimeErrors.length > 0 && (
+        <div className="bg-red-500 text-white p-3 text-xs font-mono z-50 sticky top-0 max-h-40 overflow-y-auto">
+          <p className="font-bold border-b border-white/20 pb-1 mb-1">Errores detectados ({runtimeErrors.length}):</p>
+          {runtimeErrors.map((err, i) => <div key={i}>{err}</div>)}
+          <button onClick={() => setRuntimeErrors([])} className="mt-2 bg-white text-red-500 px-2 py-0.5 rounded font-sans font-bold">Cerrar</button>
+        </div>
+      )}
       {/* Header global minimalista */}
       <header className="relative md:sticky top-0 z-40 bg-card border-b border-border/50 py-3 px-4 md:px-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -396,7 +425,7 @@ function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col justify-start md:justify-center py-6 md:py-10">
+      <main className="relative z-10 flex-1 flex flex-col justify-start md:justify-center py-6 md:py-10">
         {renderStepContent()}
       </main>
 

@@ -4,6 +4,7 @@ import { ShieldCheck, ArrowRight, ArrowLeft, AlertTriangle, User, FileText, Flas
 export function ConsentForm({ onAccept, onBack }) {
   const [isAdult, setIsAdult] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [declined, setDeclined] = useState(false);
   const [showError, setShowError] = useState(false);
 
   const handleSubmit = (e) => {
@@ -14,6 +15,52 @@ export function ConsentForm({ onAccept, onBack }) {
       setShowError(true);
     }
   };
+
+  // Pantalla de rechazo
+  if (declined) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="bg-card border border-border/80 rounded-3xl shadow-sm card-shadow overflow-hidden">
+          <div className="bg-amber-500 px-6 pt-7 pb-6 text-white">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-white/15 rounded-xl shrink-0 mt-0.5">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Participación no confirmada</p>
+                <h2 className="text-lg sm:text-xl font-extrabold leading-snug">No aceptó el consentimiento informado</h2>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-8 text-center space-y-4">
+            <p className="text-text-muted text-sm leading-relaxed max-w-lg mx-auto">
+              Ha indicado que <strong className="text-text-main">no acepta</strong> participar en esta investigación.
+              Agradecemos sinceramente su tiempo e interés. Su decisión es completamente respetada y no tendrá ninguna consecuencia negativa.
+            </p>
+            <p className="text-text-muted text-xs">
+              Si desea reconsiderar su decisión, puede volver al formulario de consentimiento.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeclined(false)}
+                className="px-6 py-3 rounded-xl border border-border bg-surface hover:bg-surface-hover text-text-main font-semibold cursor-pointer"
+              >
+                Volver al consentimiento
+              </button>
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold cursor-pointer shadow-sm"
+              >
+                Salir al inicio
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const Section = ({ icon: Icon, title, children, color = 'text-primary', bg = 'bg-primary/10 dark:bg-primary/20' }) => (
     <div className="space-y-2">
@@ -30,7 +77,7 @@ export function ConsentForm({ onAccept, onBack }) {
   );
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
+    <div className="relative z-10 max-w-3xl mx-auto px-4 py-6">
       <div className="bg-card border border-border/80 rounded-3xl shadow-sm card-shadow overflow-hidden">
 
         {/* Cabecera institucional */}
@@ -254,6 +301,7 @@ export function ConsentForm({ onAccept, onBack }) {
 
             {/* Checkboxes */}
             <form onSubmit={handleSubmit} className="space-y-3">
+              {/* Acepto — mayoría de edad */}
               <label className="flex items-start gap-3 cursor-pointer select-none">
                 <input
                   id="confirm-adult"
@@ -266,10 +314,11 @@ export function ConsentForm({ onAccept, onBack }) {
                   className="mt-0.5 w-5 h-5 rounded border-border text-primary focus:ring-primary cursor-pointer shrink-0"
                 />
                 <span className="text-sm font-medium text-text-main leading-snug">
-                  ☐ Confirmo que soy <strong>mayor de 18 años</strong>.
+                  Confirmo que soy <strong>mayor de 18 años</strong>.
                 </span>
               </label>
 
+              {/* Acepto — consentimiento */}
               <label className="flex items-start gap-3 cursor-pointer select-none">
                 <input
                   id="confirm-terms"
@@ -282,13 +331,41 @@ export function ConsentForm({ onAccept, onBack }) {
                   className="mt-0.5 w-5 h-5 rounded border-border text-primary focus:ring-primary cursor-pointer shrink-0"
                 />
                 <span className="text-sm font-medium text-text-main leading-snug">
-                  ☐ He leído y acepto el presente consentimiento informado y <strong>acepto participar voluntariamente</strong> en esta investigación.
+                  He leído y acepto el presente consentimiento informado y <strong>acepto participar voluntariamente</strong> en esta investigación.
+                </span>
+              </label>
+
+              {/* Separador */}
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 h-px bg-border/60" />
+                <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">o bien</span>
+                <div className="flex-1 h-px bg-border/60" />
+              </div>
+
+              {/* No acepto */}
+              <label className="flex items-start gap-3 cursor-pointer select-none group">
+                <input
+                  id="decline-terms"
+                  type="checkbox"
+                  checked={declined}
+                  onChange={(e) => {
+                    setDeclined(e.target.checked);
+                    if (e.target.checked) {
+                      setIsAdult(false);
+                      setAcceptedTerms(false);
+                      setShowError(false);
+                    }
+                  }}
+                  className="mt-0.5 w-5 h-5 rounded border-red-300 text-red-500 focus:ring-red-400 cursor-pointer shrink-0"
+                />
+                <span className="text-sm font-medium text-text-muted group-hover:text-red-500 leading-snug">
+                  <strong className="text-red-500">No acepto</strong> participar en esta investigación y deseo salir del formulario.
                 </span>
               </label>
 
               {showError && (
                 <p className="text-xs text-red-500 font-medium bg-red-500/10 border border-red-200 dark:border-red-900/30 rounded-xl px-3 py-2">
-                  Por favor, confirme ambas casillas para continuar.
+                  Por favor, confirme ambas casillas de aceptación para continuar.
                 </p>
               )}
 
@@ -296,7 +373,7 @@ export function ConsentForm({ onAccept, onBack }) {
                 Una copia de este consentimiento informado puede ser solicitada a los investigadores.
               </p>
 
-              {/* Botones */}
+              {/* Botones de navegación */}
               <div className="flex justify-between items-center pt-4 border-t border-border/60">
                 <button
                   type="button"
@@ -306,17 +383,29 @@ export function ConsentForm({ onAccept, onBack }) {
                   <ArrowLeft className="w-4 h-4" />
                   Atrás
                 </button>
-                <button
-                  type="submit"
-                  className={`flex items-center gap-1.5 px-6 py-3 font-semibold rounded-xl text-white shadow-sm ${
-                    acceptedTerms && isAdult
-                      ? 'bg-primary hover:bg-primary-hover hover:shadow cursor-pointer'
-                      : 'bg-text-muted/30 cursor-not-allowed opacity-60'
-                  }`}
-                >
-                  Continuar
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+
+                {declined ? (
+                  <button
+                    type="button"
+                    onClick={() => setDeclined(true)}
+                    className="flex items-center gap-1.5 px-6 py-3 font-semibold rounded-xl text-white bg-red-500 hover:bg-red-600 shadow-sm cursor-pointer"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    No acepto — Salir
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className={`flex items-center gap-1.5 px-6 py-3 font-semibold rounded-xl text-white shadow-sm ${
+                      acceptedTerms && isAdult
+                        ? 'bg-primary hover:bg-primary-hover hover:shadow cursor-pointer'
+                        : 'bg-text-muted/30 cursor-not-allowed opacity-60'
+                    }`}
+                  >
+                    Continuar
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </form>
           </div>

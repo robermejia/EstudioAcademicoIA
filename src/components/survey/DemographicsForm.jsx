@@ -77,7 +77,7 @@ export function DemographicsForm({ onSave, onBack, initialData }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="relative z-10 max-w-2xl mx-auto px-4 py-6">
       <div
         className="bg-card border border-border/80 rounded-3xl p-6 md:p-10 shadow-sm card-shadow"
       >
