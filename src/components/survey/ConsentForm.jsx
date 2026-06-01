@@ -282,7 +282,7 @@ export function ConsentForm({ onAccept, onBack }) {
                   <div>
                     <p className="font-semibold text-text-main">Teléfono de contacto</p>
                     <p>991 585 471</p>
-                    <p>065 367 734</p>
+                    <p>965 367 734</p>
                   </div>
                 </div>
               </div>
