@@ -574,7 +574,7 @@ function App() {
       {/* Footer minimalista */}
       <footer className="py-4 border-t border-border/50 text-center text-[10px] sm:text-xs text-text-muted bg-card/50">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <span>&copy; {new Date().getFullYear()} Cuestionario Académico de Investigación sobre IA.</span>
+          <span>&copy; {new Date().getFullYear()} Cuestionario Académico de Investigación sobre IA. Desarrollado por Roberto Agustín Mejía Collazos.</span>
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 mt-1 sm:mt-0">
             <span className="hover:text-text-main transition-colors">Privacidad garantizada</span>
             <span className="w-1 h-1 bg-border rounded-full hidden sm:inline" />
