@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 
 import { 
   Users, BarChart3, Database, Download, LogOut, Search, 
-  ChevronRight, Calendar, Info, RefreshCw, CheckCircle, GraduationCap
+  ChevronRight, Calendar, Info, RefreshCw, CheckCircle, GraduationCap, Trash2
 } from 'lucide-react';
-import { getAllResponses } from '../../lib/surveyService';
+import { getAllResponses, clearAllResponses } from '../../lib/surveyService';
 import { auth } from '../../lib/firebase';
 import { signOut } from 'firebase/auth';
 
@@ -58,6 +58,34 @@ export function AdminDashboard({ onLogoutSuccess }) {
       setError('Error al recuperar las respuestas de la base de datos.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearDatabase = async () => {
+    const confirmation = window.confirm(
+      '¡ATENCIÓN! Esto eliminará permanentemente todas las respuestas registradas en la base de datos de Firebase.\n\n¿Está seguro de que desea continuar? Esta acción no se puede deshacer.'
+    );
+    
+    if (confirmation) {
+      const confirmWord = window.prompt(
+        'Para confirmar la eliminación permanente, escriba la palabra "ELIMINAR" en mayúsculas:'
+      );
+      
+      if (confirmWord === 'ELIMINAR') {
+        setLoading(true);
+        setError('');
+        try {
+          await clearAllResponses();
+          alert('Base de datos vaciada con éxito.');
+          await fetchResponses();
+        } catch (err) {
+          console.error(err);
+          setError('Error al vaciar la base de datos de respuestas.');
+          setLoading(false);
+        }
+      } else {
+        alert('Confirmación cancelada o incorrecta. No se eliminó ningún dato.');
+      }
     }
   };
 
@@ -226,8 +254,22 @@ export function AdminDashboard({ onLogoutSuccess }) {
 
           <button
             type="button"
+            onClick={handleClearDatabase}
+            disabled={totalParticipants === 0}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 text-white text-xs font-semibold rounded-xl transition-all shadow-sm flex-1 sm:flex-initial ${
+              totalParticipants === 0
+                ? 'bg-text-muted/30 cursor-not-allowed opacity-50'
+                : 'bg-red-500 hover:bg-red-600 hover:shadow cursor-pointer'
+            }`}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Vaciar BD
+          </button>
+
+          <button
+            type="button"
             onClick={handleLogout}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex-1 sm:flex-initial"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-600 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex-1 sm:flex-initial"
           >
             <LogOut className="w-3.5 h-3.5" />
             Salir

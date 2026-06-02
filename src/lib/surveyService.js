@@ -1,6 +1,6 @@
 import { db, auth } from './firebase';
 import { 
-  collection, addDoc, getDoc, doc, getDocs, setDoc, query, limit, serverTimestamp 
+  collection, addDoc, getDoc, doc, getDocs, setDoc, query, limit, serverTimestamp, deleteDoc
 } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
@@ -152,6 +152,21 @@ export async function getAllResponses() {
     }));
   } catch (error) {
     console.error('Error al recuperar las respuestas:', error);
+    throw error;
+  }
+}
+
+/**
+ * Elimina todas las respuestas registradas en Firestore
+ */
+export async function clearAllResponses() {
+  try {
+    const snap = await getDocs(collection(db, 'survey_responses'));
+    const deletePromises = snap.docs.map(docSnapshot => deleteDoc(docSnapshot.ref));
+    await Promise.all(deletePromises);
+    return { success: true };
+  } catch (error) {
+    console.error('Error al vaciar las respuestas:', error);
     throw error;
   }
 }
