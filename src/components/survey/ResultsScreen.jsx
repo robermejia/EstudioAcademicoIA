@@ -1,6 +1,6 @@
-import { CheckCircle2, AlertTriangle, RefreshCw, Download, Info } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, RefreshCw, Download, Info, Home } from 'lucide-react';
 
-export function ResultsScreen({ rawData, syncStatus, errorMsg, onRetrySync, participantId }) {
+export function ResultsScreen({ rawData, syncStatus, errorMsg, onRetrySync, participantId, onGoHome }) {
   const handleDownloadBackup = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawData, null, 2));
     const link = document.createElement('a');
@@ -111,6 +111,18 @@ export function ResultsScreen({ rawData, syncStatus, errorMsg, onRetrySync, part
               Descargar copia local de respuestas (.json)
             </button>
           )}
+
+          {/* Botón para regresar al inicio */}
+          <div className="pt-4 border-t border-border/40 mt-4">
+            <button
+              type="button"
+              onClick={onGoHome}
+              className="w-full flex items-center justify-center gap-1.5 px-5 py-3 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow cursor-pointer transition-all"
+            >
+              <Home className="w-4 h-4" />
+              Regresar al Inicio
+            </button>
+          </div>
         </div>
 
         {syncStatus === 'failed' && (

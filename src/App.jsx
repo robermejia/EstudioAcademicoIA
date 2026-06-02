@@ -11,6 +11,8 @@ import { VideoTraining } from './components/survey/VideoTraining';
 import { ResultsScreen } from './components/survey/ResultsScreen';
 import { AdminLogin } from './components/admin/AdminLogin';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { ExpertDemographics } from './components/survey/ExpertDemographics';
+import { ExpertEvaluationForm } from './components/survey/ExpertEvaluationForm';
 
 // Cargar Servicios y Utilidades
 import {
@@ -18,7 +20,8 @@ import {
   saveLocalProgress,
   getLocalProgress,
   clearLocalProgress,
-  submitSurveyResponse
+  submitSurveyResponse,
+  submitExpertEvaluation
 } from './lib/surveyService';
 
 // Definición de las 19 preguntas del Cuestionario
@@ -79,6 +82,24 @@ function App() {
     const saved = getLocalProgress();
     return saved?.participantId || generateParticipantId();
   });
+
+  // Estados de la nueva encuesta de expertos
+  const [surveyType, setSurveyType] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.surveyType || 'criterio';
+  });
+  const [expertDemographics, setExpertDemographics] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.expertDemographics || null;
+  });
+  const [expertRatings, setExpertRatings] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.expertRatings || {};
+  });
+  const [expertQuestionIndex, setExpertQuestionIndex] = useState(() => {
+    const saved = getLocalProgress();
+    return saved?.expertQuestionIndex !== undefined ? saved.expertQuestionIndex : 0;
+  });
   
   // Estado de Sincronización y Carga
   const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, synced, failed
@@ -131,14 +152,18 @@ function App() {
     if (currentStep !== 'RESULTS' && currentStep !== 'WELCOME') {
       saveLocalProgress({
         currentStep,
+        surveyType,
         demographics,
         pretestAnswers,
         posttestAnswers,
         currentQuestionIndex,
-        participantId
+        participantId,
+        expertDemographics,
+        expertRatings,
+        expertQuestionIndex
       });
     }
-  }, [currentStep, demographics, pretestAnswers, posttestAnswers, currentQuestionIndex, participantId]);
+  }, [currentStep, surveyType, demographics, pretestAnswers, posttestAnswers, currentQuestionIndex, participantId, expertDemographics, expertRatings, expertQuestionIndex]);
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -151,6 +176,10 @@ function App() {
       setPosttestAnswers({});
       setCurrentQuestionIndex(0);
       setParticipantId(generateParticipantId());
+      setExpertDemographics(null);
+      setExpertRatings({});
+      setExpertQuestionIndex(0);
+      setSurveyType('criterio');
       setCurrentStep('WELCOME');
       setSyncStatus('idle');
       setErrorMsg('');
@@ -162,6 +191,21 @@ function App() {
     setSyncStatus('syncing');
     try {
       const res = await submitSurveyResponse(finalPayload);
+      if (res.success) {
+        setSyncStatus('synced');
+        clearLocalProgress();
+      }
+    } catch (error) {
+      setSyncStatus('failed');
+      setErrorMsg(error.message || 'Error de conexión');
+    }
+  };
+
+  // Guardar evaluación de experto en Firebase al finalizar
+  const handleSubmitExpertSurvey = async (finalPayload) => {
+    setSyncStatus('syncing');
+    try {
+      const res = await submitExpertEvaluation(finalPayload);
       if (res.success) {
         setSyncStatus('synced');
         clearLocalProgress();
@@ -256,13 +300,75 @@ function App() {
 
     switch (currentStep) {
       case 'WELCOME':
-        return <WelcomeScreen onStart={() => setCurrentStep('CONSENT')} />;
+        return (
+          <WelcomeScreen
+            onStart={(type) => {
+              setSurveyType(type);
+              setCurrentStep('CONSENT');
+            }}
+          />
+        );
       
       case 'CONSENT':
         return (
           <ConsentForm
-            onAccept={() => setCurrentStep('DEMOGRAPHICS')}
+            surveyType={surveyType}
+            onAccept={() => {
+              if (surveyType === 'contenido') {
+                setCurrentStep('EXPERT_DEMOGRAPHICS');
+              } else {
+                setCurrentStep('DEMOGRAPHICS');
+              }
+            }}
             onBack={() => setCurrentStep('WELCOME')}
+          />
+        );
+
+      case 'EXPERT_DEMOGRAPHICS':
+        return (
+          <ExpertDemographics
+            initialData={expertDemographics}
+            onSave={(data) => {
+              setExpertDemographics(data);
+              setCurrentStep('EXPERT_EVALUATION');
+              setExpertQuestionIndex(0);
+            }}
+            onBack={() => setCurrentStep('CONSENT')}
+          />
+        );
+
+      case 'EXPERT_EVALUATION':
+        return (
+          <ExpertEvaluationForm
+            ratings={expertRatings}
+            currentIndex={expertQuestionIndex}
+            onChange={(itemId, itemRating) => {
+              setExpertRatings(prev => ({
+                ...prev,
+                [itemId]: itemRating
+              }));
+            }}
+            onNext={() => {
+              if (expertQuestionIndex < 9) {
+                setExpertQuestionIndex(prev => prev + 1);
+              } else {
+                const payload = {
+                  name: expertDemographics?.name,
+                  profession: expertDemographics?.profession,
+                  ratings: expertRatings,
+                  createdAt: new Date().toISOString()
+                };
+                setCurrentStep('RESULTS');
+                handleSubmitExpertSurvey(payload);
+              }
+            }}
+            onBack={() => {
+              if (expertQuestionIndex > 0) {
+                setExpertQuestionIndex(prev => prev - 1);
+              } else {
+                setCurrentStep('EXPERT_DEMOGRAPHICS');
+              }
+            }}
           />
         );
       
@@ -350,10 +456,15 @@ function App() {
       case 'RESULTS':
         return (
           <ResultsScreen
-            participantId={participantId}
+            participantId={surveyType === 'contenido' ? expertDemographics?.name : participantId}
             syncStatus={syncStatus}
             errorMsg={errorMsg}
-            rawData={{
+            rawData={surveyType === 'contenido' ? {
+              name: expertDemographics?.name,
+              profession: expertDemographics?.profession,
+              ratings: expertRatings,
+              createdAt: new Date().toISOString()
+            } : {
               participantId,
               demographics,
               pretest: pretestAnswers,
@@ -361,19 +472,50 @@ function App() {
               createdAt: new Date().toISOString()
             }}
             onRetrySync={() => {
-              handleSubmitSurvey({
-                participantId,
-                demographics,
-                pretest: pretestAnswers,
-                posttest: posttestAnswers,
-                createdAt: new Date().toISOString()
-              });
+              if (surveyType === 'contenido') {
+                handleSubmitExpertSurvey({
+                  name: expertDemographics?.name,
+                  profession: expertDemographics?.profession,
+                  ratings: expertRatings,
+                  createdAt: new Date().toISOString()
+                });
+              } else {
+                handleSubmitSurvey({
+                  participantId,
+                  demographics,
+                  pretest: pretestAnswers,
+                  posttest: posttestAnswers,
+                  createdAt: new Date().toISOString()
+                });
+              }
+            }}
+            onGoHome={() => {
+              clearLocalProgress();
+              setDemographics(null);
+              setPretestAnswers({});
+              setPosttestAnswers({});
+              setCurrentQuestionIndex(0);
+              setParticipantId(generateParticipantId());
+              setExpertDemographics(null);
+              setExpertRatings({});
+              setExpertQuestionIndex(0);
+              setSurveyType('criterio');
+              setCurrentStep('WELCOME');
+              setSyncStatus('idle');
+              setErrorMsg('');
             }}
           />
         );
 
       default:
-        return <WelcomeScreen onStart={() => setCurrentStep('CONSENT')} />;
+        return (
+          <WelcomeScreen
+            onStart={(type) => {
+              setSurveyType(type);
+              setCurrentStep('CONSENT');
+            }}
+          />
+        );
     }
   };
 

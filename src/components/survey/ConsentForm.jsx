@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ShieldCheck, ArrowRight, ArrowLeft, AlertTriangle, User, FileText, FlaskConical, Gift, Lock, BookOpen, HandHelping, Mail, Phone } from 'lucide-react';
 
-export function ConsentForm({ onAccept, onBack }) {
+export function ConsentForm({ onAccept, onBack, surveyType }) {
   const [isAdult, setIsAdult] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [declined, setDeclined] = useState(false);
@@ -113,17 +113,30 @@ export function ConsentForm({ onAccept, onBack }) {
 
           {/* Propósito / Objetivo */}
           <Section icon={FileText} title="Propósito del estudio">
-            <p>
-              He sido invitado(a) a participar del estudio titulado{' '}
-              <em>"Impacto de la inteligencia artificial generativa en la efectividad del aprendizaje en estudiantes de educación superior virtual"</em>,
-              realizado por <strong className="text-text-main">Roberto Agustín Mejía Collazos</strong> y{' '}
-              <strong className="text-text-main">Miguel Ángel Velásquez Ysuiza</strong>, de la Universidad Tecnológica del Perú (UTP).
-            </p>
-            <p>
-              El objetivo es recopilar información sobre el uso de herramientas de inteligencia artificial generativa (ChatGPT, Gemini y Copilot)
-              y su influencia en la efectividad del aprendizaje en jóvenes universitarios entre 18 y 35 años
-              pertenecientes a comunidades académicas virtuales.
-            </p>
+            {surveyType === 'contenido' ? (
+              <>
+                <p>
+                  Este cuestionario forma parte de un estudio que analiza el impacto del uso de herramientas de inteligencia artificial generativa en el aprendizaje de estudiantes de educación superior virtual. Se busca comprender cómo estas herramientas influyen en la manera en que los estudiantes procesan la información y desarrollan sus capacidades de aprendizaje.
+                </p>
+                <p>
+                  <strong className="text-text-main">Objetivo del cuestionario:</strong> El objetivo es evaluar la efectividad del aprendizaje desde la percepción del estudiante. Para ello, se analizarán aspectos relacionados con la comprensión de los contenidos y la capacidad de aplicar el conocimiento de manera creativa.
+                </p>
+              </>
+            ) : (
+              <>
+                <p>
+                  He sido invitado(a) a participar del estudio titulado{' '}
+                  <em>"Impacto de la inteligencia artificial generativa en la efectividad del aprendizaje en estudiantes de educación superior virtual"</em>,
+                  realizado por <strong className="text-text-main">Roberto Agustín Mejía Collazos</strong> y{' '}
+                  <strong className="text-text-main">Miguel Ángel Velásquez Ysuiza</strong>, de la Universidad Tecnológica del Perú (UTP).
+                </p>
+                <p>
+                  El objetivo es recopilar información sobre el uso de herramientas de inteligencia artificial generativa (ChatGPT, Gemini y Copilot)
+                  y su influencia en la efectividad del aprendizaje en jóvenes universitarios entre 18 y 35 años
+                  pertenecientes a comunidades académicas virtuales.
+                </p>
+              </>
+            )}
           </Section>
 
           {/* Procedimiento */}
@@ -135,28 +148,56 @@ export function ConsentForm({ onAccept, onBack }) {
               <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">Procedimiento de participación</h3>
             </div>
             <div className="pl-8 text-sm text-text-muted leading-relaxed space-y-1.5">
-              <p>La participación se realizará de manera <strong className="text-text-main">virtual</strong> mediante esta plataforma web. El procedimiento comprende:</p>
-              <ol className="list-decimal pl-5 space-y-1 text-text-muted">
-                <li>Lectura y aceptación del presente consentimiento informado.</li>
-                <li>Confirmación de mayoría de edad.</li>
-                <li>Desarrollo del cuestionario inicial (<strong className="text-text-main">pretest</strong>).</li>
-                <li>Visualización de un <strong className="text-text-main">video de capacitación</strong> sobre inteligencia artificial generativa.</li>
-                <li>Desarrollo del cuestionario final (<strong className="text-text-main">postest</strong>).</li>
-              </ol>
-              <p className="mt-2">
-                <strong className="text-text-main">Tiempo estimado:</strong> entre 15 y 20 minutos.{' '}
-                <strong className="text-text-main">Total de preguntas:</strong> 20 ítems en escala Likert, más preguntas de caracterización general.
-              </p>
-              <div className="mt-2 space-y-1">
-                <p><strong className="text-text-main">Datos que se recogerán:</strong></p>
-                <ul className="list-disc pl-5 space-y-0.5">
-                  <li>Edad y sexo.</li>
-                  <li>Uso de herramientas de IA generativa (ChatGPT, Gemini, Copilot).</li>
-                  <li>Nivel de comprensión de contenidos y creatividad en el aprendizaje.</li>
-                  <li>Respuestas al pretest y postest.</li>
-                </ul>
-                <p className="text-xs italic mt-1">No se solicitarán datos sensibles ni información que permita identificar personalmente a los participantes.</p>
-              </div>
+              {surveyType === 'contenido' ? (
+                <>
+                  <p>La participación se realizará de manera <strong className="text-text-main">virtual</strong> mediante esta plataforma web. Su rol consiste en realizar la evaluación de expertos del instrumento de efectividad de aprendizaje:</p>
+                  <p className="font-semibold text-text-main">
+                    Evalúa cada ítem asignando un puntaje del 1 al 5 en los siguientes criterios:
+                  </p>
+                  <ul className="list-disc pl-5 space-y-0.5 text-text-muted">
+                    <li><strong>Claridad:</strong> ¿El ítem se redactó de manera entendible?</li>
+                    <li><strong>Coherencia:</strong> ¿El ítem tiene lógica interna con el tema?</li>
+                    <li><strong>Relevancia:</strong> ¿El ítem es importante para medir la variable?</li>
+                  </ul>
+                  <p className="mt-2">Finalmente, puedes agregar observaciones si lo consideras necesario.</p>
+                  <p className="font-semibold text-text-main mt-3">Escala de Calificación:</p>
+                  <ul className="list-disc pl-5 space-y-0.5 text-text-muted">
+                    <li><strong>1</strong> = Insuficiente</li>
+                    <li><strong>2</strong> = En inicio</li>
+                    <li><strong>3</strong> = En desarrollo</li>
+                    <li><strong>4</strong> = Logrado</li>
+                    <li><strong>5</strong> = Destacado</li>
+                  </ul>
+                  <p className="font-semibold text-primary mt-3">
+                    Responde con sinceridad. (Se calculará la validez de contenido por el coeficiente V de Aiken).
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>La participación se realizará de manera <strong className="text-text-main">virtual</strong> mediante esta plataforma web. El procedimiento comprende:</p>
+                  <ol className="list-decimal pl-5 space-y-1 text-text-muted">
+                    <li>Lectura y aceptación del presente consentimiento informado.</li>
+                    <li>Confirmación de mayoría de edad.</li>
+                    <li>Desarrollo del cuestionario inicial (<strong className="text-text-main">pretest</strong>).</li>
+                    <li>Visualización de un <strong className="text-text-main">video de capacitación</strong> sobre inteligencia artificial generativa.</li>
+                    <li>Desarrollo del cuestionario final (<strong className="text-text-main">postest</strong>).</li>
+                  </ol>
+                  <p className="mt-2">
+                    <strong className="text-text-main">Tiempo estimado:</strong> entre 15 y 20 minutos.{' '}
+                    <strong className="text-text-main">Total de preguntas:</strong> 20 ítems en escala Likert, más preguntas de caracterización general.
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    <p><strong className="text-text-main">Datos que se recogerán:</strong></p>
+                    <ul className="list-disc pl-5 space-y-0.5">
+                      <li>Edad y sexo.</li>
+                      <li>Uso de herramientas de IA generativa (ChatGPT, Gemini, Copilot).</li>
+                      <li>Nivel de comprensión de contenidos y creatividad en el aprendizaje.</li>
+                      <li>Respuestas al pretest y postest.</li>
+                    </ul>
+                    <p className="text-xs italic mt-1">No se solicitarán datos sensibles ni información que permita identificar personalmente a los participantes.</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

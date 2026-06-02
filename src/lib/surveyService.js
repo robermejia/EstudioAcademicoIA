@@ -170,3 +170,49 @@ export async function clearAllResponses() {
     throw error;
   }
 }
+
+/**
+ * Recupera todas las evaluaciones de expertos almacenadas en Firestore
+ */
+export async function getExpertEvaluations() {
+  try {
+    const snap = await getDocs(collection(db, 'expert_evaluations'));
+    return snap.docs.map(docSnapshot => ({
+      id: docSnapshot.id,
+      ...docSnapshot.data()
+    }));
+  } catch (error) {
+    console.error('Error al recuperar evaluaciones de expertos:', error);
+    throw error;
+  }
+}
+
+/**
+ * Registra una nueva evaluación de experto en Firestore
+ */
+export async function submitExpertEvaluation(data) {
+  try {
+    const payload = {
+      ...data,
+      submittedAt: serverTimestamp()
+    };
+    const docRef = await addDoc(collection(db, 'expert_evaluations'), payload);
+    return { success: true, docId: docRef.id };
+  } catch (error) {
+    console.error('Error al registrar evaluación de experto:', error);
+    throw error;
+  }
+}
+
+/**
+ * Elimina la evaluación de un experto
+ */
+export async function deleteExpertEvaluation(id) {
+  try {
+    await deleteDoc(doc(db, 'expert_evaluations', id));
+    return { success: true };
+  } catch (error) {
+    console.error('Error al eliminar evaluación de experto:', error);
+    throw error;
+  }
+}

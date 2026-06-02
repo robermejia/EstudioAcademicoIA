@@ -1,12 +1,85 @@
 import { useState, useEffect } from 'react';
-
 import { 
   Users, BarChart3, Database, Download, LogOut, Search, 
-  ChevronRight, Calendar, Info, RefreshCw, CheckCircle, GraduationCap, Trash2
+  ChevronRight, Calendar, Info, RefreshCw, CheckCircle, GraduationCap, Trash2,
+  Award, FileText, Plus, X, ExternalLink, HelpCircle
 } from 'lucide-react';
-import { getAllResponses, clearAllResponses } from '../../lib/surveyService';
+import { 
+  getAllResponses, 
+  clearAllResponses,
+  getExpertEvaluations,
+  submitExpertEvaluation,
+  deleteExpertEvaluation
+} from '../../lib/surveyService';
 import { auth } from '../../lib/firebase';
 import { signOut } from 'firebase/auth';
+
+const EXPERT_ITEMS = [
+  { id: 1, dimension: 'D1: Comprensión de contenidos', text: 'Soy capaz de explicar los conceptos aprendidos con mis propias palabras.' },
+  { id: 2, dimension: 'D1: Comprensión de contenidos', text: 'Comprendo la relación entre los temas desarrollados durante la capacitación.' },
+  { id: 3, dimension: 'D1: Comprensión de contenidos', text: 'Puedo aplicar los conocimientos aprendidos en ejercicios prácticos.' },
+  { id: 4, dimension: 'D1: Comprensión de contenidos', text: 'Identifico con claridad las ideas principales del contenido presentado.' },
+  { id: 5, dimension: 'D1: Comprensión de contenidos', text: 'Relaciono los nuevos conocimientos con aprendizajes previos.' },
+  { id: 6, dimension: 'D2: Creatividad', text: 'Genero nuevas ideas a partir de los contenidos aprendidos.' },
+  { id: 7, dimension: 'D2: Creatividad', text: 'Propongo soluciones diferentes utilizando herramientas de IA generativa.' },
+  { id: 8, dimension: 'D2: Creatividad', text: 'Combino diferentes ideas para crear propuestas originales.' },
+  { id: 9, dimension: 'D2: Creatividad', text: 'Exploro nuevas formas de resolver problemas académicos.' },
+  { id: 10, dimension: 'D2: Creatividad', text: 'Adapto los conocimientos aprendidos a nuevas situaciones.' }
+];
+
+const SEED_EXPERTS = [
+  {
+    name: 'Dr. Carlos Mendoza',
+    profession: 'Doctor en Educación y Tecnología',
+    ratings: {
+      '1': { clarity: 5, coherence: 5, relevance: 5, obs: 'Excelente claridad.' },
+      '2': { clarity: 4, coherence: 5, relevance: 5, obs: '' },
+      '3': { clarity: 5, coherence: 4, relevance: 5, obs: '' },
+      '4': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '5': { clarity: 4, coherence: 4, relevance: 5, obs: '' },
+      '6': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '7': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '8': { clarity: 4, coherence: 5, relevance: 4, obs: '' },
+      '9': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '10': { clarity: 5, coherence: 4, relevance: 5, obs: 'Relevante para el estudio.' }
+    },
+    isSeed: true
+  },
+  {
+    name: 'Dra. Ana María Silva',
+    profession: 'Investigadora en IA Educativa',
+    ratings: {
+      '1': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '2': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '3': { clarity: 4, coherence: 5, relevance: 5, obs: '' },
+      '4': { clarity: 4, coherence: 4, relevance: 5, obs: '' },
+      '5': { clarity: 5, coherence: 5, relevance: 4, obs: '' },
+      '6': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '7': { clarity: 4, coherence: 5, relevance: 5, obs: '' },
+      '8': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '9': { clarity: 5, coherence: 4, relevance: 5, obs: '' },
+      '10': { clarity: 5, coherence: 5, relevance: 5, obs: '' }
+    },
+    isSeed: true
+  },
+  {
+    name: 'Mg. Roberto Gómez',
+    profession: 'Experto en Diseño Instruccional',
+    ratings: {
+      '1': { clarity: 4, coherence: 5, relevance: 5, obs: '' },
+      '2': { clarity: 5, coherence: 4, relevance: 5, obs: '' },
+      '3': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '4': { clarity: 5, coherence: 5, relevance: 4, obs: '' },
+      '5': { clarity: 4, coherence: 5, relevance: 5, obs: '' },
+      '6': { clarity: 4, coherence: 4, relevance: 5, obs: '' },
+      '7': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '8': { clarity: 5, coherence: 5, relevance: 5, obs: '' },
+      '9': { clarity: 4, coherence: 5, relevance: 5, obs: '' },
+      '10': { clarity: 5, coherence: 5, relevance: 4, obs: '' }
+    },
+    isSeed: true
+  }
+];
 
 const DIMENSIONS = [
   { key: 'chatgpt', label: 'ChatGPT', color: 'bg-blue-500', text: 'text-blue-500' },
@@ -39,27 +112,56 @@ const QUESTIONS = [
 ];
 
 export function AdminDashboard({ onLogoutSuccess }) {
+  // Pestaña Activa: 'contenido' (Aiken's V) o 'criterio' (Piloto)
+  const [activeTab, setActiveTab] = useState('contenido');
+
+  // Respuestas del Grupo Piloto
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResponse, setSelectedResponse] = useState(null); // Detalle de un participante
 
-  const fetchResponses = async () => {
+  // Evaluaciones de Expertos
+  const [expertEvaluations, setExpertEvaluations] = useState([]);
+  const [isExpertModalOpen, setIsExpertModalOpen] = useState(false);
+  const [newExpert, setNewExpert] = useState({
+    name: '',
+    profession: '',
+    ratings: EXPERT_ITEMS.reduce((acc, item) => {
+      acc[item.id] = { clarity: 5, coherence: 5, relevance: 5, obs: '' };
+      return acc;
+    }, {})
+  });
+
+  const fetchData = async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await getAllResponses();
-      // Ordenar por fecha descendente
-      data.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-      setResponses(data);
+      // Cargar piloto
+      const pilotData = await getAllResponses();
+      pilotData.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      setResponses(pilotData);
+
+      // Cargar expertos
+      const expertData = await getExpertEvaluations();
+      // Si no hay expertos en Firebase, inyectamos los datos semilla para visualización interactiva inmediata
+      if (expertData.length === 0) {
+        setExpertEvaluations(SEED_EXPERTS);
+      } else {
+        setExpertEvaluations(expertData);
+      }
     } catch (err) {
       console.error(err);
-      setError('Error al recuperar las respuestas de la base de datos.');
+      setError('Error al recuperar datos del servidor.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleClearDatabase = async () => {
     const confirmation = window.confirm(
@@ -77,7 +179,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
         try {
           await clearAllResponses();
           alert('Base de datos vaciada con éxito.');
-          await fetchResponses();
+          await fetchData();
         } catch (err) {
           console.error(err);
           setError('Error al vaciar la base de datos de respuestas.');
@@ -89,10 +191,6 @@ export function AdminDashboard({ onLogoutSuccess }) {
     }
   };
 
-  useEffect(() => {
-    fetchResponses();
-  }, []);
-
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -102,7 +200,96 @@ export function AdminDashboard({ onLogoutSuccess }) {
     }
   };
 
-  // Cálculo de estadísticas descriptivas generales
+  // --- CÁLCULO DE VALIDEZ DE CONTENIDO (AIKEN'S V) ---
+  // Aiken's V formula: V = S / (n * (c - 1))
+  // n = número de expertos, c = 5 (rango 1 a 5, c-1 = 4), S = sumatorio(r - 1)
+  const calculateAikensV = (itemId, criterion) => {
+    if (expertEvaluations.length === 0) return 0;
+    const n = expertEvaluations.length;
+    let sumS = 0;
+    expertEvaluations.forEach(exp => {
+      const score = exp.ratings?.[itemId]?.[criterion] || 5;
+      sumS += (score - 1);
+    });
+    const maxPossibleS = n * 4;
+    return maxPossibleS > 0 ? parseFloat((sumS / maxPossibleS).toFixed(2)) : 0;
+  };
+
+  const getAikensBadgeColor = (v) => {
+    if (v >= 0.8) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200';
+    if (v >= 0.7) return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-200';
+    return 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-200';
+  };
+
+  const getAikensStatus = (v) => {
+    if (v >= 0.8) return 'Válido';
+    if (v >= 0.7) return 'Aceptable';
+    return 'Revaluar';
+  };
+
+  const getObservationsList = (itemId) => {
+    return expertEvaluations
+      .map(exp => {
+        const obs = exp.ratings?.[itemId]?.obs || '';
+        return obs.trim() ? `${exp.name}: "${obs}"` : '';
+      })
+      .filter(Boolean);
+  };
+
+  const handleSaveExpert = async (e) => {
+    e.preventDefault();
+    if (!newExpert.name.trim()) {
+      alert('Por favor, introduzca el nombre del experto.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Guardar en Firestore
+      await submitExpertEvaluation(newExpert);
+      // Recargar datos
+      await fetchData();
+      setIsExpertModalOpen(false);
+      // Reset form
+      setNewExpert({
+        name: '',
+        profession: '',
+        ratings: EXPERT_ITEMS.reduce((acc, item) => {
+          acc[item.id] = { clarity: 5, coherence: 5, relevance: 5, obs: '' };
+          return acc;
+        }, {})
+      });
+      alert('Evaluación de experto guardada con éxito.');
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar la evaluación.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteExpert = async (expert) => {
+    if (expert.isSeed) {
+      // Si es un dato semilla local, lo removemos del estado
+      setExpertEvaluations(prev => prev.filter(e => e.name !== expert.name));
+      return;
+    }
+    if (window.confirm(`¿Está seguro de que desea eliminar la evaluación del experto ${expert.name}?`)) {
+      try {
+        setLoading(true);
+        await deleteExpertEvaluation(expert.id);
+        await fetchData();
+        alert('Evaluación eliminada correctamente.');
+      } catch (err) {
+        console.error(err);
+        alert('Error al eliminar la evaluación.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // --- CÁLCULOS DEL GRUPO PILOTO (VALIDEZ DE CRITERIO) ---
   const totalParticipants = responses.length;
   
   const averageAge = totalParticipants > 0 
@@ -113,7 +300,6 @@ export function AdminDashboard({ onLogoutSuccess }) {
     ? Math.round((responses.filter(r => r.demographics?.hasUsedAI === 'yes').length / totalParticipants) * 100)
     : 0;
 
-  // Conteo de herramienta más usada
   const toolCounts = responses.reduce((acc, r) => {
     const tool = r.demographics?.mostUsedTool || 'Ninguna';
     acc[tool] = (acc[tool] || 0) + 1;
@@ -125,7 +311,6 @@ export function AdminDashboard({ onLogoutSuccess }) {
     return Math.round(((toolCounts[toolName] || 0) / totalParticipants) * 100);
   };
 
-  // Función para calcular promedio de dimensión (escala 1-5)
   const getDimensionAverage = (dimensionKey, phase) => {
     if (totalParticipants === 0) return 0;
     
@@ -162,7 +347,6 @@ export function AdminDashboard({ onLogoutSuccess }) {
     return count > 0 ? parseFloat((totalSum / count).toFixed(2)) : 0;
   };
 
-  // Filtrar respuestas de la tabla
   const filteredResponses = responses.filter(r => {
     const search = searchQuery.toLowerCase();
     const idMatch = (r.participantId || '').toLowerCase().includes(search);
@@ -171,7 +355,6 @@ export function AdminDashboard({ onLogoutSuccess }) {
     return idMatch || genderMatch || toolMatch;
   });
 
-  // Exportación a CSV
   const handleExportCSV = () => {
     if (responses.length === 0) return;
     
@@ -202,7 +385,6 @@ export function AdminDashboard({ onLogoutSuccess }) {
       ].map(val => `"${val}"`).join(',');
     });
 
-    // Añadir BOM de UTF-8 para compatibilidad de acentos en Excel
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' 
       + [headers.join(','), ...rows].join('\n');
     
@@ -231,11 +413,11 @@ export function AdminDashboard({ onLogoutSuccess }) {
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto mt-4 md:mt-0">
           <button
             type="button"
-            onClick={fetchResponses}
+            onClick={fetchData}
             className="flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-surface hover:bg-surface-hover border border-border text-text-main text-xs font-semibold rounded-xl transition-colors cursor-pointer flex-1 sm:flex-initial"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Actualizar
+            Actualizar Datos
           </button>
           
           <button
@@ -249,7 +431,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
             }`}
           >
             <Download className="w-3.5 h-3.5" />
-            Exportar CSV
+            Exportar CSV Piloto
           </button>
 
           <button
@@ -277,6 +459,32 @@ export function AdminDashboard({ onLogoutSuccess }) {
         </div>
       </div>
 
+      {/* Tabs Selector */}
+      <div className="flex border-b border-border/80 gap-2">
+        <button
+          onClick={() => setActiveTab('contenido')}
+          className={`flex items-center gap-2 px-5 py-3 font-bold text-sm transition-all rounded-t-xl border-t border-x -mb-px cursor-pointer ${
+            activeTab === 'contenido'
+              ? 'bg-card border-border text-primary border-b-bg-app'
+              : 'border-transparent text-text-muted hover:text-text-main'
+          }`}
+        >
+          <Award className="w-4 h-4" />
+          1. Validez de contenido (Aiken’s V)
+        </button>
+        <button
+          onClick={() => setActiveTab('criterio')}
+          className={`flex items-center gap-2 px-5 py-3 font-bold text-sm transition-all rounded-t-xl border-t border-x -mb-px cursor-pointer ${
+            activeTab === 'criterio'
+              ? 'bg-card border-border text-primary border-b-bg-app'
+              : 'border-transparent text-text-muted hover:text-text-main'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          Validez de criterio (Grupo piloto de 20-30 personas)
+        </button>
+      </div>
+
       {loading ? (
         <div className="min-h-[40vh] flex items-center justify-center">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -285,8 +493,221 @@ export function AdminDashboard({ onLogoutSuccess }) {
         <div className="p-6 bg-red-500/10 text-red-600 dark:text-red-400 rounded-2xl border border-red-500/20 text-center font-semibold">
           {error}
         </div>
+      ) : activeTab === 'contenido' ? (
+        // CONTENIDO DEL TAB DE VALIDEZ DE CONTENIDO (AIKEN'S V)
+        <div className="space-y-8 animate-fadeIn">
+          {/* Card Informativa del Instrumento */}
+          <div className="bg-card border border-border/80 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div>
+                <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg uppercase tracking-wide">
+                  Instrumento de Evaluación de Expertos
+                </span>
+                <h2 className="text-xl font-bold text-text-main mt-2">
+                  Efectividad del Aprendizaje en Entornos Virtuales
+                </h2>
+              </div>
+              <a
+                href="https://form.typeform.com/to/Fs7JQV2i"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-hover shadow-sm transition-all"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Formulario Online (Typeform)
+              </a>
+            </div>
+
+            <p className="text-text-muted text-xs leading-relaxed max-w-4xl">
+              El presente instrumento tiene como propósito evaluar la efectividad del aprendizaje en estudiantes de educación superior en entornos virtuales, en el marco de un estudio que analiza la influencia del uso de herramientas de inteligencia artificial generativa. La variable dependiente se mide a través de dos dimensiones: <strong>Comprensión de contenidos</strong> y <strong>Creatividad</strong>.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border/40 text-xs">
+              <div>
+                <span className="font-semibold text-text-main block mb-1">Criterios de Calificación (Escala 1 a 5):</span>
+                <ul className="space-y-1 text-text-muted list-disc pl-4">
+                  <li><strong>1 - Insuficiente / Nulo:</strong> No comprende y es incapaz de generar ideas.</li>
+                  <li><strong>2 - En Inicio:</strong> Comprensión vaga o fragmentada. Repite conceptos.</li>
+                  <li><strong>3 - En desarrollo:</strong> Comprende lo básico, aplica de forma estándar.</li>
+                  <li><strong>4 - Logrado:</strong> Domina con claridad, crea o adapta con independencia.</li>
+                  <li><strong>5 - Destacado:</strong> Dominio profundo, innova, crea nuevas perspectivas.</li>
+                </ul>
+              </div>
+              <div className="bg-surface/50 border border-border/40 p-4 rounded-xl space-y-2">
+                <span className="font-semibold text-text-main block">Estadísticas de Validez General</span>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-card p-2 rounded-lg border border-border/60">
+                    <span className="text-[10px] text-text-muted block">Claridad Promedio</span>
+                    <span className="text-sm font-extrabold text-primary">
+                      {(EXPERT_ITEMS.reduce((sum, item) => sum + calculateAikensV(item.id, 'clarity'), 0) / 10).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="bg-card p-2 rounded-lg border border-border/60">
+                    <span className="text-[10px] text-text-muted block">Coherencia Promedio</span>
+                    <span className="text-sm font-extrabold text-primary">
+                      {(EXPERT_ITEMS.reduce((sum, item) => sum + calculateAikensV(item.id, 'coherence'), 0) / 10).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="bg-card p-2 rounded-lg border border-border/60">
+                    <span className="text-[10px] text-text-muted block">Relevancia Promedio</span>
+                    <span className="text-sm font-extrabold text-primary">
+                      {(EXPERT_ITEMS.reduce((sum, item) => sum + calculateAikensV(item.id, 'relevance'), 0) / 10).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-[10px] text-text-muted text-center italic mt-1">
+                  * Un valor Aiken's V ≥ 0.80 indica una validez óptima del ítem.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabla de Aiken's V por Ítem */}
+          <div className="bg-card border border-border/80 rounded-3xl p-6 shadow-sm">
+            <h3 className="text-base font-bold text-text-main mb-4 flex items-center gap-2">
+              <Award className="w-5 h-5 text-primary" />
+              Coeficiente Aiken's V por Ítem
+            </h3>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-border/80 text-text-muted font-bold uppercase tracking-wider">
+                    <th className="py-3 px-4 w-12 text-center">#</th>
+                    <th className="py-3 px-4 w-1/3">Ítem / Pregunta</th>
+                    <th className="py-3 px-4">Dimensión</th>
+                    <th className="py-3 px-4 text-center">V (Claridad)</th>
+                    <th className="py-3 px-4 text-center">V (Coherencia)</th>
+                    <th className="py-3 px-4 text-center">V (Relevancia)</th>
+                    <th className="py-3 px-4 text-center">Estado</th>
+                    <th className="py-3 px-4">Observaciones compiladas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {EXPERT_ITEMS.map((item) => {
+                    const vClarity = calculateAikensV(item.id, 'clarity');
+                    const vCoherence = calculateAikensV(item.id, 'coherence');
+                    const vRelevance = calculateAikensV(item.id, 'relevance');
+                    const avgV = parseFloat(((vClarity + vCoherence + vRelevance) / 3).toFixed(2));
+                    const obsList = getObservationsList(item.id);
+
+                    return (
+                      <tr key={item.id} className="border-b border-border/40 hover:bg-surface/30 transition-colors">
+                        <td className="py-3 px-4 font-bold text-center text-text-muted">{item.id}</td>
+                        <td className="py-3 px-4 font-medium text-text-main">{item.text}</td>
+                        <td className="py-3 px-4 text-text-muted font-semibold text-[10px]">{item.dimension}</td>
+                        <td className="py-3 px-4 text-center font-bold font-mono">
+                          <span className={`px-2 py-0.5 rounded border ${getAikensBadgeColor(vClarity)}`}>
+                            {vClarity.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center font-bold font-mono">
+                          <span className={`px-2 py-0.5 rounded border ${getAikensBadgeColor(vCoherence)}`}>
+                            {vCoherence.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center font-bold font-mono">
+                          <span className={`px-2 py-0.5 rounded border ${getAikensBadgeColor(vRelevance)}`}>
+                            {vRelevance.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            avgV >= 0.8 
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' 
+                              : avgV >= 0.7 
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' 
+                              : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                          }`}>
+                            {getAikensStatus(avgV)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 max-w-[200px] truncate" title={obsList.join(' | ')}>
+                          {obsList.length > 0 ? (
+                            <span className="text-[10px] text-text-muted italic">{obsList[0]} {obsList.length > 1 && `(+${obsList.length - 1})`}</span>
+                          ) : (
+                            <span className="text-text-muted/40">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Listado y Registro de Expertos */}
+          <div className="bg-card border border-border/80 rounded-3xl p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div>
+                <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Evaluaciones de Expertos ({expertEvaluations.length})
+                </h3>
+                <p className="text-xs text-text-muted">Expertos registrados cuyos datos determinan la validez del Aiken's V anterior</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsExpertModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-hover shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Registrar Evaluación de Experto
+              </button>
+            </div>
+
+            {expertEvaluations.length === 0 ? (
+              <p className="text-text-muted text-sm text-center py-8">No hay expertos registrados.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {expertEvaluations.map((exp, idx) => (
+                  <div key={idx} className="border border-border/80 rounded-2xl p-4 bg-surface/40 space-y-3 relative group">
+                    <button
+                      onClick={() => handleDeleteExpert(exp)}
+                      className="absolute top-3 right-3 text-text-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-surface border border-border rounded-lg"
+                      title="Eliminar evaluación"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <div>
+                      <h4 className="font-extrabold text-sm text-text-main">{exp.name}</h4>
+                      <p className="text-[10px] text-text-muted font-medium">{exp.profession || 'Profesional no especificado'}</p>
+                    </div>
+                    {exp.isSeed && (
+                      <span className="inline-block text-[9px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-900/60 dark:text-slate-400 px-2 py-0.5 rounded border border-slate-200/50">
+                        Dato Demostrativo
+                      </span>
+                    )}
+                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-border/30 text-center text-[10px]">
+                      <div>
+                        <span className="text-text-muted block">Claridad Prom</span>
+                        <span className="font-bold text-text-main">
+                          {(EXPERT_ITEMS.reduce((sum, item) => sum + (exp.ratings?.[item.id]?.clarity || 5), 0) / 10).toFixed(1)} / 5
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-text-muted block">Coherencia Prom</span>
+                        <span className="font-bold text-text-main">
+                          {(EXPERT_ITEMS.reduce((sum, item) => sum + (exp.ratings?.[item.id]?.coherence || 5), 0) / 10).toFixed(1)} / 5
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-text-muted block">Relevancia Prom</span>
+                        <span className="font-bold text-text-main">
+                          {(EXPERT_ITEMS.reduce((sum, item) => sum + (exp.ratings?.[item.id]?.relevance || 5), 0) / 10).toFixed(1)} / 5
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
-        <>
+        // CONTENIDO DEL TAB DE VALIDEZ DE CRITERIO (GRUPO PILOTO ACTUAL)
+        <div className="space-y-8 animate-fadeIn">
           {/* Tarjetas KPI */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center gap-4">
@@ -335,7 +756,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
             <div className="flex items-center gap-2 mb-6">
               <BarChart3 className="w-5 h-5 text-primary" />
               <h2 className="text-lg sm:text-xl font-bold text-text-main">
-                Efectividad: Comparativa Pretest vs. Posttest
+                Efectividad: Comparativa Pretest vs. Posttest (Grupo Piloto)
               </h2>
             </div>
             
@@ -347,7 +768,6 @@ export function AdminDashboard({ onLogoutSuccess }) {
                   const preAvg = getDimensionAverage(dim.key, 'pretest');
                   const postAvg = getDimensionAverage(dim.key, 'posttest');
                   
-                  // Escala de barra basada en el valor del promedio (máximo es 5.0)
                   const prePct = (preAvg / 5) * 100;
                   const postPct = (postAvg / 5) * 100;
 
@@ -358,7 +778,6 @@ export function AdminDashboard({ onLogoutSuccess }) {
                         <span className="text-xs text-text-muted">Escala Likert (1 - 5)</span>
                       </div>
                       
-                      {/* Barras de comparación */}
                       <div className="md:col-span-3 space-y-2.5">
                         {/* Pretest */}
                         <div className="space-y-1">
@@ -472,7 +891,170 @@ export function AdminDashboard({ onLogoutSuccess }) {
               </div>
             )}
           </div>
-        </>
+        </div>
+      )}
+
+      {/* Modal para Agregar Experto */}
+      {isExpertModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            onClick={() => setIsExpertModalOpen(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+          />
+          
+          <div className="relative bg-card border border-border rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-xl z-10 animate-scaleUp">
+            <div className="flex justify-between items-start gap-4 mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-text-main">
+                  Registrar Evaluación de Experto
+                </h3>
+                <p className="text-xs text-text-muted">Por favor, complete las puntuaciones de 1 a 5 para Claridad, Coherencia y Relevancia en cada ítem.</p>
+              </div>
+              <button
+                onClick={() => setIsExpertModalOpen(false)}
+                className="p-1 px-2.5 hover:bg-surface border border-border rounded-lg text-text-muted hover:text-text-main text-xs transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveExpert} className="space-y-6">
+              {/* Información Personal */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-text-main block">Nombre y apellido del experto</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. Dr. Juan Pérez"
+                    value={newExpert.name}
+                    onChange={(e) => setNewExpert(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-surface text-text-main focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-text-main block">Profesión / Especialidad</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. Doctor en Educación / Investigador"
+                    value={newExpert.profession}
+                    onChange={(e) => setNewExpert(prev => ({ ...prev, profession: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-surface text-text-main focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Items a evaluar */}
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 border-y border-border/40 py-4">
+                {EXPERT_ITEMS.map((item) => {
+                  const rating = newExpert.ratings[item.id];
+                  
+                  const handleRatingChange = (field, value) => {
+                    setNewExpert(prev => ({
+                      ...prev,
+                      ratings: {
+                        ...prev.ratings,
+                        [item.id]: {
+                          ...prev.ratings[item.id],
+                          [field]: parseInt(value)
+                        }
+                      }
+                    }));
+                  };
+
+                  const handleObsChange = (value) => {
+                    setNewExpert(prev => ({
+                      ...prev,
+                      ratings: {
+                        ...prev.ratings,
+                        [item.id]: {
+                          ...prev.ratings[item.id],
+                          obs: value
+                        }
+                      }
+                    }));
+                  };
+
+                  return (
+                    <div key={item.id} className="p-3 bg-surface/50 border border-border/40 rounded-xl space-y-3">
+                      <div className="flex justify-between items-start gap-3">
+                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                          Ítem {item.id} - {item.dimension}
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium text-text-main">{item.text}</p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center pt-2">
+                        {/* Claridad */}
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-text-muted">Claridad (1-5)</label>
+                          <select
+                            value={rating.clarity}
+                            onChange={(e) => handleRatingChange('clarity', e.target.value)}
+                            className="bg-card text-text-main text-xs border border-border rounded-lg p-1.5 focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+                          >
+                            {[5, 4, 3, 2, 1].map(v => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                        {/* Coherencia */}
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-text-muted">Coherencia (1-5)</label>
+                          <select
+                            value={rating.coherence}
+                            onChange={(e) => handleRatingChange('coherence', e.target.value)}
+                            className="bg-card text-text-main text-xs border border-border rounded-lg p-1.5 focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+                          >
+                            {[5, 4, 3, 2, 1].map(v => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                        {/* Relevancia */}
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-text-muted">Relevancia (1-5)</label>
+                          <select
+                            value={rating.relevance}
+                            onChange={(e) => handleRatingChange('relevance', e.target.value)}
+                            className="bg-card text-text-main text-xs border border-border rounded-lg p-1.5 focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+                          >
+                            {[5, 4, 3, 2, 1].map(v => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                        {/* Observaciones */}
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-text-muted">Observaciones</label>
+                          <input
+                            type="text"
+                            placeholder="Comentario opcional"
+                            value={rating.obs}
+                            onChange={(e) => handleObsChange(e.target.value)}
+                            className="bg-card text-text-main text-xs border border-border rounded-lg p-1.5 focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsExpertModalOpen(false)}
+                  className="px-4 py-2 border border-border text-text-main font-semibold text-xs rounded-xl hover:bg-surface transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-primary text-white font-semibold text-xs rounded-xl hover:bg-primary-hover shadow-sm transition-all cursor-pointer"
+                >
+                  Guardar Evaluación
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Modal de Detalles del Participante */}
