@@ -91,7 +91,7 @@ function App() {
   // Estado del Modo Oscuro
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('ia-survey-dark-mode');
-    return saved ? JSON.parse(saved) : false;
+    return saved ? JSON.parse(saved) : true;
   });
 
   // Estado para capturar errores en producción/móvil
