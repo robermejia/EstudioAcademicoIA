@@ -850,59 +850,67 @@ export function AdminDashboard({ onLogoutSuccess }) {
             </div>
           </div>
 
-          {/* Gráfico Comparativo Pretest vs Posttest */}
+          {/* ── GRÁFICO V1: Variable Independiente ── */}
           <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              <h2 className="text-lg sm:text-xl font-bold text-text-main">
-                Efectividad: Comparativa Pretest vs. Posttest (Grupo Piloto)
-              </h2>
+            {/* Encabezado */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
+                <h2 className="text-lg sm:text-xl font-bold text-text-main">
+                  Variable 1 (independiente): Herramientas de IA Generativas
+                </h2>
+              </div>
+              <span className="self-start sm:self-auto px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800 whitespace-nowrap">
+                V1 — Independiente
+              </span>
             </div>
-            
+            <p className="text-xs text-text-muted mb-6 max-w-2xl">
+              Mide la <strong>autopercepción del uso</strong> de cada herramienta de IA antes y después de la capacitación.
+              Dimensiones: <strong>D1 ChatGPT Education · D2 Gemini · D3 Copilot</strong>
+            </p>
+
             {totalParticipants === 0 ? (
-              <p className="text-text-muted text-sm text-center py-8">No hay respuestas registradas aún para generar estadísticas.</p>
+              <p className="text-text-muted text-sm text-center py-8">No hay respuestas registradas aún.</p>
             ) : (
               <div className="space-y-6">
-                {DIMENSIONS.map((dim) => {
+                {DIMENSIONS.filter(d => ['chatgpt', 'gemini', 'copilot'].includes(d.key)).map((dim, i) => {
                   const preAvg = getDimensionAverage(dim.key, 'pretest');
                   const postAvg = getDimensionAverage(dim.key, 'posttest');
-                  
+                  const diff = parseFloat((postAvg - preAvg).toFixed(2));
                   const prePct = (preAvg / 5) * 100;
                   const postPct = (postAvg / 5) * 100;
+                  const labels = ['D1', 'D2', 'D3'];
 
                   return (
-                    <div key={dim.key} className="grid grid-cols-1 md:grid-cols-4 items-center gap-3 pb-6 border-b border-border/55 last:border-b-0 last:pb-0">
+                    <div key={dim.key} className="grid grid-cols-1 md:grid-cols-4 items-center gap-3 pb-6 border-b border-border/40 last:border-b-0 last:pb-0">
                       <div>
+                        <span className="text-[10px] font-extrabold text-blue-500 uppercase tracking-widest block">{labels[i]}</span>
                         <span className="font-bold text-text-main block">{dim.label}</span>
-                        <span className="text-xs text-text-muted">Escala Likert (1 - 5)</span>
+                        <span className="text-xs text-text-muted">Escala Likert (1 – 5)</span>
+                        {diff !== 0 && (
+                          <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${diff > 0 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300'}`}>
+                            {diff > 0 ? `▲ +${diff}` : `▼ ${diff}`}
+                          </span>
+                        )}
                       </div>
-                      
+
                       <div className="md:col-span-3 space-y-2.5">
-                        {/* Pretest */}
                         <div className="space-y-1">
                           <div className="flex justify-between items-center text-xs">
                             <span className="font-medium text-text-muted">Pretest</span>
                             <span className="font-bold text-text-main">{preAvg} / 5.0</span>
                           </div>
                           <div className="w-full h-3 bg-surface rounded-full overflow-hidden border border-border/40">
-                            <div
-                              className="h-full bg-slate-400 dark:bg-slate-500 rounded-full transition-all duration-1000 ease-out"
-                              style={{ width: `${prePct}%` }}
-                            />
+                            <div className="h-full bg-slate-400 dark:bg-slate-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${prePct}%` }} />
                           </div>
                         </div>
-
-                        {/* Posttest */}
                         <div className="space-y-1">
                           <div className="flex justify-between items-center text-xs">
                             <span className="font-medium text-text-muted">Posttest</span>
                             <span className={`font-bold ${dim.text}`}>{postAvg} / 5.0</span>
                           </div>
                           <div className="w-full h-3 bg-surface rounded-full overflow-hidden border border-border/40">
-                            <div
-                              className={`h-full ${dim.color} rounded-full transition-all duration-1000 ease-out`}
-                              style={{ width: `${postPct}%` }}
-                            />
+                            <div className={`h-full ${dim.color} rounded-full transition-all duration-1000 ease-out`} style={{ width: `${postPct}%` }} />
                           </div>
                         </div>
                       </div>
@@ -912,6 +920,231 @@ export function AdminDashboard({ onLogoutSuccess }) {
               </div>
             )}
           </div>
+
+          {/* ── GRÁFICO V2: Variable Dependiente ── */}
+          <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
+            {/* Encabezado */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-emerald-500" />
+                <h2 className="text-lg sm:text-xl font-bold text-text-main">
+                  Variable 2 (dependiente): Efectividad del Aprendizaje
+                </h2>
+              </div>
+              <span className="self-start sm:self-auto px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
+                V2 — Dependiente
+              </span>
+            </div>
+            <p className="text-xs text-text-muted mb-6 max-w-2xl">
+              Mide el <strong>nivel de aprendizaje efectivo</strong> del participante antes y después del estímulo (video de capacitación).
+              Dimensiones: <strong>D1 Comprensión de contenidos · D2 Creatividad</strong>
+            </p>
+
+            {totalParticipants === 0 ? (
+              <p className="text-text-muted text-sm text-center py-8">No hay respuestas registradas aún.</p>
+            ) : (
+              <div className="space-y-6">
+                {DIMENSIONS.filter(d => ['comprension', 'creatividad'].includes(d.key)).map((dim, i) => {
+                  const preAvg = getDimensionAverage(dim.key, 'pretest');
+                  const postAvg = getDimensionAverage(dim.key, 'posttest');
+                  const diff = parseFloat((postAvg - preAvg).toFixed(2));
+                  const prePct = (preAvg / 5) * 100;
+                  const postPct = (postAvg / 5) * 100;
+                  const labels = ['D1', 'D2'];
+
+                  return (
+                    <div key={dim.key} className="grid grid-cols-1 md:grid-cols-4 items-center gap-3 pb-6 border-b border-border/40 last:border-b-0 last:pb-0">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-emerald-500 uppercase tracking-widest block">{labels[i]}</span>
+                        <span className="font-bold text-text-main block">{dim.label}</span>
+                        <span className="text-xs text-text-muted">Escala Likert (1 – 5)</span>
+                        {diff !== 0 && (
+                          <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${diff > 0 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300'}`}>
+                            {diff > 0 ? `▲ +${diff}` : `▼ ${diff}`}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-3 space-y-2.5">
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-medium text-text-muted">Pretest</span>
+                            <span className="font-bold text-text-main">{preAvg} / 5.0</span>
+                          </div>
+                          <div className="w-full h-3 bg-surface rounded-full overflow-hidden border border-border/40">
+                            <div className="h-full bg-slate-400 dark:bg-slate-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${prePct}%` }} />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-medium text-text-muted">Posttest</span>
+                            <span className={`font-bold ${dim.text}`}>{postAvg} / 5.0</span>
+                          </div>
+                          <div className="w-full h-3 bg-surface rounded-full overflow-hidden border border-border/40">
+                            <div className={`h-full ${dim.color} rounded-full transition-all duration-1000 ease-out`} style={{ width: `${postPct}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Nota metodológica */}
+            {totalParticipants > 0 && (
+              <div className="mt-6 pt-4 border-t border-border/40 flex items-start gap-2 text-[10px] text-text-muted">
+                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-500" />
+                <p>
+                  Un incremento en el Posttest respecto al Pretest en las dimensiones <strong>Comprensión</strong> y <strong>Creatividad</strong> indica que 
+                  el uso de herramientas de IA generativa tuvo un <strong>efecto positivo</strong> sobre la efectividad del aprendizaje.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* ── TABLA GLOBAL DE PUNTUACIONES POR PREGUNTA (estilo Excel) ── */}
+          {responses.length > 0 && (() => {
+            const phases = [
+              { key: 'pretest', label: 'PRETEST', color: 'bg-slate-500', headerBg: 'bg-slate-100 dark:bg-slate-800', textColor: 'text-slate-700 dark:text-slate-200' },
+              { key: 'posttest', label: 'POSTTEST', color: 'bg-primary', headerBg: 'bg-primary/10 dark:bg-primary/20', textColor: 'text-primary dark:text-sky-300' }
+            ];
+
+            const getParticipantQuestionAvg = (r, phase) => {
+              let sum = 0, count = 0;
+              QUESTIONS.forEach(q => {
+                const v = r[phase]?.[q.id];
+                if (v !== undefined) { sum += v; count++; }
+              });
+              return count > 0 ? parseFloat((sum / count).toFixed(2)) : null;
+            };
+
+            const getColumnAvg = (phase, qId) => {
+              let sum = 0, count = 0;
+              responses.forEach(r => {
+                const v = r[phase]?.[qId];
+                if (v !== undefined) { sum += v; count++; }
+              });
+              return count > 0 ? parseFloat((sum / count).toFixed(2)) : null;
+            };
+
+            const getGlobalAvg = (phase) => {
+              let sum = 0, count = 0;
+              responses.forEach(r => {
+                QUESTIONS.forEach(q => {
+                  const v = r[phase]?.[q.id];
+                  if (v !== undefined) { sum += v; count++; }
+                });
+              });
+              return count > 0 ? parseFloat((sum / count).toFixed(2)) : null;
+            };
+
+            const scoreColor = (val) => {
+              if (val === null || val === undefined || val === '-') return '';
+              const n = parseFloat(val);
+              if (n >= 4.5) return 'text-emerald-600 dark:text-emerald-400 font-extrabold';
+              if (n >= 3.5) return 'text-blue-600 dark:text-blue-400 font-bold';
+              if (n >= 2.5) return 'text-amber-600 dark:text-amber-400 font-bold';
+              return 'text-rose-600 dark:text-rose-400 font-bold';
+            };
+
+            return phases.map(phase => (
+              <div key={phase.key} className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h2 className="text-base sm:text-lg font-bold text-text-main">
+                    Tabla de Puntuaciones por Pregunta — <span className={phase.textColor}>{phase.label}</span>
+                  </h2>
+                </div>
+                <p className="text-xs text-text-muted mb-4">
+                  Puntuación Likert (1–5) de cada participante por pregunta. La fila <strong>PROMEDIO</strong> refleja la media del grupo piloto.
+                </p>
+
+                <div className="overflow-x-auto">
+                  <table className="text-[10px] border-collapse min-w-max w-full">
+                    <thead>
+                      {/* Fila de dimensiones */}
+                      <tr>
+                        <th className="py-2 px-3 border border-border/60 bg-surface font-bold text-text-muted text-left" rowSpan={2}>PARTICIPANTE</th>
+                        {['ChatGPT', 'Gemini', 'Copilot', 'Comprensión de contenidos', 'Creatividad'].map(dim => {
+                          const count = QUESTIONS.filter(q => q.dimension === dim).length;
+                          return (
+                            <th
+                              key={dim}
+                              colSpan={count}
+                              className={`py-1.5 px-2 border border-border/60 text-center font-extrabold uppercase tracking-wide ${phase.headerBg} ${phase.textColor}`}
+                            >
+                              {dim}
+                            </th>
+                          );
+                        })}
+                        <th className={`py-1.5 px-2 border border-border/60 text-center font-extrabold uppercase tracking-wide ${phase.headerBg} ${phase.textColor}`} rowSpan={2}>
+                          PROM.
+                        </th>
+                      </tr>
+                      {/* Fila de preguntas */}
+                      <tr>
+                        {QUESTIONS.map((q, i) => (
+                          <th key={q.id} className="py-1.5 px-2 border border-border/60 bg-surface text-center font-bold text-text-muted whitespace-nowrap">
+                            P{i + 1}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {responses.map((r, idx) => {
+                        const rowAvg = getParticipantQuestionAvg(r, phase.key);
+                        return (
+                          <tr key={r.id} className={`border-b border-border/30 ${idx % 2 === 0 ? 'bg-surface/20' : ''} hover:bg-primary/5 transition-colors`}>
+                            <td className="py-1.5 px-3 border border-border/40 font-mono font-bold text-primary whitespace-nowrap">
+                              {r.participantId || `P${idx + 1}`}
+                            </td>
+                            {QUESTIONS.map(q => {
+                              const val = r[phase.key]?.[q.id];
+                              return (
+                                <td key={q.id} className={`py-1.5 px-2 border border-border/30 text-center ${scoreColor(val)}`}>
+                                  {val !== undefined ? val : <span className="text-text-muted/40">—</span>}
+                                </td>
+                              );
+                            })}
+                            <td className={`py-1.5 px-2 border border-border/40 text-center font-extrabold ${phase.textColor}`}>
+                              {rowAvg !== null ? rowAvg : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {/* Fila PROMEDIO */}
+                      <tr className={`${phase.headerBg} border-t-2 border-primary/30`}>
+                        <td className={`py-2 px-3 border border-border/60 font-extrabold uppercase tracking-wider ${phase.textColor}`}>
+                          PROMEDIO
+                        </td>
+                        {QUESTIONS.map(q => {
+                          const avg = getColumnAvg(phase.key, q.id);
+                          return (
+                            <td key={q.id} className={`py-2 px-2 border border-border/40 text-center font-extrabold ${scoreColor(avg)}`}>
+                              {avg !== null ? avg : '—'}
+                            </td>
+                          );
+                        })}
+                        <td className={`py-2 px-2 border border-border/40 text-center font-extrabold text-sm ${phase.textColor}`}>
+                          {getGlobalAvg(phase.key) ?? '—'}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Leyenda de colores */}
+                <div className="flex flex-wrap gap-3 mt-3 text-[10px] text-text-muted">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 4.5–5.0 Destacado</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> 3.5–4.4 Logrado</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> 2.5–3.4 En desarrollo</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> 1.0–2.4 En inicio</span>
+                </div>
+              </div>
+            ));
+          })()}
 
           {/* Listado de Participantes */}
           <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
@@ -1204,31 +1437,85 @@ export function AdminDashboard({ onLogoutSuccess }) {
               </div>
             </div>
 
-            {/* Respuestas comparativas de las preguntas */}
+            {/* Tabla de preguntas estilo Excel */}
             <div className="space-y-4">
               <h4 className="font-bold text-sm text-text-main border-b border-border/60 pb-2">
-                Puntuaciones de Preguntas (Pretest vs. Posttest)
+                Puntuaciones Pretest vs. Posttest — todas las preguntas
               </h4>
-              
-              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                {QUESTIONS.map((q) => {
-                  const preVal = selectedResponse.pretest?.[q.id] || '-';
-                  const postVal = selectedResponse.posttest?.[q.id] || '-';
-                  
-                  return (
-                    <div key={q.id} className="text-xs flex flex-col sm:flex-row justify-between gap-2 py-2 border-b border-border/30 last:border-0">
-                      <div className="sm:max-w-md">
-                        <span className="text-[9px] font-semibold text-primary/70 block uppercase tracking-wider">{q.dimension}</span>
-                        <span className="text-text-main font-medium">{q.text}</span>
-                      </div>
-                      <div className="flex gap-4 shrink-0 sm:self-center font-semibold">
-                        <span className="text-text-muted">Pre: <span className="text-text-main font-bold bg-surface px-2 py-0.5 rounded border border-border">{preVal}</span></span>
-                        <span className="text-text-muted">Post: <span className="text-primary font-bold bg-primary/10 px-2 py-0.5 rounded border border-primary/20">{postVal}</span></span>
-                      </div>
-                    </div>
-                  );
-                })}
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px] border-collapse min-w-max">
+                  <thead>
+                    <tr>
+                      <th className="py-2 px-3 border border-border/60 bg-surface font-bold text-text-muted text-left" rowSpan={2}>#</th>
+                      <th className="py-2 px-3 border border-border/60 bg-surface font-bold text-text-muted text-left" rowSpan={2}>PREGUNTA</th>
+                      <th className="py-2 px-3 border border-border/60 bg-surface font-bold text-text-muted text-left" rowSpan={2}>DIMENSIÓN</th>
+                      <th className="py-1.5 px-2 border border-border/60 bg-slate-100 dark:bg-slate-800 text-center font-extrabold uppercase text-slate-700 dark:text-slate-200" colSpan={2}>FASES</th>
+                    </tr>
+                    <tr>
+                      <th className="py-1.5 px-3 border border-border/60 bg-slate-100 dark:bg-slate-800 text-center font-extrabold text-slate-600 dark:text-slate-300 whitespace-nowrap">PRE</th>
+                      <th className="py-1.5 px-3 border border-border/60 bg-primary/10 dark:bg-primary/20 text-center font-extrabold text-primary whitespace-nowrap">POST</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {QUESTIONS.map((q, i) => {
+                      const preVal = selectedResponse.pretest?.[q.id];
+                      const postVal = selectedResponse.posttest?.[q.id];
+                      const diff = (preVal !== undefined && postVal !== undefined) ? postVal - preVal : null;
+
+                      const valColor = (val) => {
+                        if (val === undefined) return 'text-text-muted/40';
+                        if (val >= 5) return 'text-emerald-600 dark:text-emerald-400 font-extrabold';
+                        if (val >= 4) return 'text-blue-600 dark:text-blue-400 font-bold';
+                        if (val >= 3) return 'text-amber-600 dark:text-amber-400 font-bold';
+                        return 'text-rose-600 dark:text-rose-400 font-bold';
+                      };
+
+                      return (
+                        <tr key={q.id} className={`border-b border-border/30 ${i % 2 === 0 ? 'bg-surface/20' : ''} hover:bg-primary/5 transition-colors`}>
+                          <td className="py-1.5 px-3 border border-border/40 font-bold text-text-muted text-center">{i + 1}</td>
+                          <td className="py-1.5 px-3 border border-border/40 font-medium text-text-main max-w-[260px]">{q.text}</td>
+                          <td className="py-1.5 px-3 border border-border/40 text-text-muted whitespace-nowrap">{q.dimension}</td>
+                          <td className={`py-1.5 px-3 border border-border/30 text-center ${valColor(preVal)}`}>
+                            {preVal !== undefined ? preVal : '—'}
+                          </td>
+                          <td className={`py-1.5 px-3 border border-border/30 text-center ${valColor(postVal)}`}>
+                            {postVal !== undefined ? (
+                              <span className="flex items-center justify-center gap-1">
+                                {postVal}
+                                {diff !== null && (
+                                  <span className={`text-[9px] font-bold ${diff > 0 ? 'text-emerald-500' : diff < 0 ? 'text-rose-500' : 'text-text-muted'}`}>
+                                    {diff > 0 ? `▲+${diff}` : diff < 0 ? `▼${diff}` : '='}
+                                  </span>
+                                )}
+                              </span>
+                            ) : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {/* Fila PROMEDIO */}
+                    <tr className="bg-slate-100 dark:bg-slate-800/60 border-t-2 border-primary/30 font-extrabold">
+                      <td colSpan={3} className="py-2 px-3 border border-border/60 text-text-muted uppercase tracking-wider text-right">
+                        PROMEDIO
+                      </td>
+                      <td className="py-2 px-3 border border-border/40 text-center text-slate-700 dark:text-slate-200 font-extrabold">
+                        {(() => {
+                          const vals = QUESTIONS.map(q => selectedResponse.pretest?.[q.id]).filter(v => v !== undefined);
+                          return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '—';
+                        })()}
+                      </td>
+                      <td className="py-2 px-3 border border-border/40 text-center text-primary font-extrabold">
+                        {(() => {
+                          const vals = QUESTIONS.map(q => selectedResponse.posttest?.[q.id]).filter(v => v !== undefined);
+                          return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '—';
+                        })()}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
+              <p className="text-[10px] text-text-muted italic">▲ = mejora · ▼ = descenso · = = sin cambio respecto al pretest</p>
             </div>
 
             {selectedResponse.systemInfo && (
