@@ -135,6 +135,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
   });
 
   const [selectedExpertCriterion, setSelectedExpertCriterion] = useState('clarity'); // clarity, coherence, relevance
+  const [selectedItemObservations, setSelectedItemObservations] = useState(null); // { itemNumber, itemText, observations }
 
   const fetchData = async () => {
     setLoading(true);
@@ -680,9 +681,16 @@ export function AdminDashboard({ onLogoutSuccess }) {
                             {getAikensStatus(avgV)}
                           </span>
                         </td>
-                        <td className="py-3 px-4 max-w-[200px] truncate" title={obsList.join(' | ')}>
+                        <td className="py-3 px-4">
                           {obsList.length > 0 ? (
-                            <span className="text-[10px] text-text-muted italic">{obsList[0]} {obsList.length > 1 && `(+${obsList.length - 1})`}</span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedItemObservations({ itemNumber: item.id, itemText: item.text, observations: obsList })}
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-surface border border-border hover:border-primary/40 hover:bg-primary/5 text-primary rounded-lg transition-colors cursor-pointer text-[10px] font-bold"
+                            >
+                              <HelpCircle className="w-3 h-3" />
+                              {obsList.length} {obsList.length === 1 ? 'obs.' : 'obs.'}
+                            </button>
                           ) : (
                             <span className="text-text-muted/40">-</span>
                           )}
@@ -1688,6 +1696,48 @@ export function AdminDashboard({ onLogoutSuccess }) {
                 <span>Soporte: {selectedResponse.systemInfo.userAgent} ({selectedResponse.systemInfo.screenSize})</span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Modal de Observaciones del Ítem */}
+      {selectedItemObservations && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div
+            onClick={() => setSelectedItemObservations(null)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+          />
+          <div className="relative bg-card border border-border rounded-3xl w-full max-w-lg p-6 shadow-xl z-10 space-y-4">
+            <div className="flex justify-between items-start gap-4">
+              <div>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                  Observaciones de Expertos
+                </span>
+                <h3 className="text-base font-extrabold text-text-main mt-1">
+                  Ítem {selectedItemObservations.itemNumber}: "{selectedItemObservations.itemText}"
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedItemObservations(null)}
+                className="p-1 px-2.5 hover:bg-surface border border-border rounded-lg text-text-muted hover:text-text-main text-xs transition-colors cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+              {selectedItemObservations.observations.map((obs, i) => {
+                const separatorIdx = obs.indexOf(': ');
+                const expertName = separatorIdx !== -1 ? obs.substring(0, separatorIdx) : 'Experto';
+                const obsText = separatorIdx !== -1 ? obs.substring(separatorIdx + 2).replace(/"/g, '') : obs;
+
+                return (
+                  <div key={i} className="p-3 bg-surface rounded-xl border border-border/50 text-xs text-left">
+                    <span className="font-extrabold text-text-main block mb-1">{expertName}</span>
+                    <p className="text-text-muted italic leading-relaxed">"{obsText}"</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
