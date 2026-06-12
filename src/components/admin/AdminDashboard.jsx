@@ -134,6 +134,8 @@ export function AdminDashboard({ onLogoutSuccess }) {
     }, {})
   });
 
+  const [selectedExpertCriterion, setSelectedExpertCriterion] = useState('clarity'); // clarity, coherence, relevance
+
   const fetchData = async () => {
     setLoading(true);
     setError('');
@@ -234,6 +236,43 @@ export function AdminDashboard({ onLogoutSuccess }) {
         return obs.trim() ? `${exp.name}: "${obs}"` : '';
       })
       .filter(Boolean);
+  };
+
+  const getExpertAvg = (exp, criterion) => {
+    let sum = 0;
+    EXPERT_ITEMS.forEach(item => {
+      sum += exp.ratings?.[item.id]?.[criterion] || 5;
+    });
+    return parseFloat((sum / EXPERT_ITEMS.length).toFixed(2));
+  };
+
+  const getItemCriterionAvg = (itemId, criterion) => {
+    if (expertEvaluations.length === 0) return 0;
+    let sum = 0;
+    expertEvaluations.forEach(exp => {
+      sum += exp.ratings?.[itemId]?.[criterion] || 5;
+    });
+    return parseFloat((sum / expertEvaluations.length).toFixed(2));
+  };
+
+  const getGlobalExpertAvg = (criterion) => {
+    if (expertEvaluations.length === 0) return 0;
+    let sum = 0;
+    expertEvaluations.forEach(exp => {
+      EXPERT_ITEMS.forEach(item => {
+        sum += exp.ratings?.[item.id]?.[criterion] || 5;
+      });
+    });
+    return parseFloat((sum / (expertEvaluations.length * EXPERT_ITEMS.length)).toFixed(2));
+  };
+
+  const expertScoreColor = (val) => {
+    if (val === null || val === undefined || val === '-') return '';
+    const n = parseFloat(val);
+    if (n >= 4.5) return 'text-emerald-600 dark:text-emerald-400 font-extrabold';
+    if (n >= 3.5) return 'text-blue-600 dark:text-blue-400 font-bold';
+    if (n >= 2.5) return 'text-amber-600 dark:text-amber-400 font-bold';
+    return 'text-rose-600 dark:text-rose-400 font-bold';
   };
 
   const handleSaveExpert = async (e) => {
@@ -655,6 +694,131 @@ export function AdminDashboard({ onLogoutSuccess }) {
               </table>
             </div>
           </div>
+
+          {/* Tabla de Calificaciones por Experto (Matriz Completa con Coeficiente Aiken's V) */}
+          {expertEvaluations.length > 0 && (
+            <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h3 className="text-base sm:text-lg font-bold text-text-main">
+                    Matriz de Puntuaciones de Expertos y Coeficiente Aiken's V
+                  </h3>
+                </div>
+                
+                {/* Selector de Criterio de Aiken */}
+                <div className="flex bg-surface border border-border rounded-xl p-1 gap-1">
+                  {[
+                    { key: 'clarity', label: 'Claridad' },
+                    { key: 'coherence', label: 'Coherencia' },
+                    { key: 'relevance', label: 'Relevancia' }
+                  ].map(crit => (
+                    <button
+                      key={crit.key}
+                      type="button"
+                      onClick={() => setSelectedExpertCriterion(crit.key)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        selectedExpertCriterion === crit.key
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'text-text-muted hover:text-text-main'
+                      }`}
+                    >
+                      {crit.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <p className="text-xs text-text-muted mb-4">
+                Calificaciones de cada experto (escala 1–5) para la validez de contenido de la **Variable 2 (dependiente): Efectividad del Aprendizaje**. La fila final de **Aiken's V** muestra el coeficiente de validez calculado para cada ítem.
+              </p>
+
+              <div className="overflow-x-auto">
+                <table className="text-[10px] border-collapse min-w-max w-full">
+                  <thead>
+                    {/* Fila de dimensiones */}
+                    <tr>
+                      <th className="py-2 px-3 border border-border/60 bg-surface font-bold text-text-muted text-left" rowSpan={2}>EXPERTO / JUEZ</th>
+                      {['D1: Comprensión de contenidos', 'D2: Creatividad'].map(dim => {
+                        const count = EXPERT_ITEMS.filter(item => item.dimension.includes(dim.split(':')[0])).length;
+                        return (
+                          <th
+                            key={dim}
+                            colSpan={count}
+                            className="py-1.5 px-2 border border-border/60 text-center font-extrabold uppercase tracking-wide bg-primary/10 text-primary dark:bg-primary/20 dark:text-sky-300"
+                          >
+                            {dim}
+                          </th>
+                        );
+                      })}
+                      <th className="py-1.5 px-2 border border-border/60 text-center font-extrabold uppercase tracking-wide bg-primary/10 text-primary dark:bg-primary/20 dark:text-sky-300" rowSpan={2}>
+                        PROM.
+                      </th>
+                    </tr>
+                    {/* Fila de ítems */}
+                    <tr>
+                      {EXPERT_ITEMS.map((item) => (
+                        <th key={item.id} className="py-1.5 px-2 border border-border/60 bg-surface text-center font-bold text-text-muted whitespace-nowrap" title={item.text}>
+                          Ítem {item.id}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expertEvaluations.map((exp, idx) => {
+                      const rowAvg = getExpertAvg(exp, selectedExpertCriterion);
+                      return (
+                        <tr key={idx} className={`border-b border-border/30 ${idx % 2 === 0 ? 'bg-surface/20' : ''} hover:bg-primary/5 transition-colors`}>
+                          <td className="py-1.5 px-3 border border-border/40 font-bold text-text-main whitespace-nowrap">
+                            <div>{exp.name}</div>
+                            <div className="text-[8px] text-text-muted font-normal">{exp.profession}</div>
+                          </td>
+                          {EXPERT_ITEMS.map(item => {
+                            const val = exp.ratings?.[item.id]?.[selectedExpertCriterion];
+                            return (
+                              <td key={item.id} className={`py-1.5 px-2 border border-border/30 text-center font-semibold ${expertScoreColor(val)}`}>
+                                {val !== undefined ? val : 5}
+                              </td>
+                            );
+                          })}
+                          <td className="py-1.5 px-2 border border-border/40 text-center font-extrabold text-primary dark:text-sky-300">
+                            {rowAvg} / 5.0
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {/* Fila del Coeficiente Aiken's V */}
+                    <tr className="bg-primary/5 border-t-2 border-primary/30 font-bold">
+                      <td className="py-2 px-3 border border-border/60 font-extrabold uppercase tracking-wider text-primary dark:text-sky-300">
+                        COEFICIENTE AIKEN'S V
+                      </td>
+                      {EXPERT_ITEMS.map(item => {
+                        const vVal = calculateAikensV(item.id, selectedExpertCriterion);
+                        return (
+                          <td key={item.id} className="py-2 px-2 border border-border/40 text-center font-extrabold font-mono">
+                            <span className={`px-2 py-0.5 rounded border text-[10px] ${getAikensBadgeColor(vVal)}`}>
+                              {vVal.toFixed(2)}
+                            </span>
+                          </td>
+                        );
+                      })}
+                      <td className="py-2 px-2 border border-border/40 text-center font-extrabold text-xs text-primary dark:text-sky-300 font-mono">
+                        {(EXPERT_ITEMS.reduce((sum, item) => sum + calculateAikensV(item.id, selectedExpertCriterion), 0) / 10).toFixed(2)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Leyenda de Aiken */}
+              <div className="flex flex-wrap gap-3 mt-3 text-[10px] text-text-muted">
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span> V ≥ 0.80 Válido (Óptimo)</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block"></span> 0.70 ≤ V &lt; 0.80 Aceptable</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block"></span> V &lt; 0.70 Revaluar ítem</span>
+              </div>
+            </div>
+          )}
 
           {/* Listado y Registro de Expertos */}
           <div className="bg-card border border-border/80 rounded-3xl p-6 shadow-sm">
