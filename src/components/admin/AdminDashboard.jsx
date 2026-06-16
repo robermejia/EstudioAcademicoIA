@@ -907,7 +907,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
                   Validez de Criterio (Grupo Piloto)
                 </span>
                 <h2 className="text-xl font-bold text-text-main mt-2">
-                  Estudio Piloto de Efectividad del Aprendizaje
+                  Estudio Piloto de Efectividad del Aprendizaje y Herramientas de IA Generativas
                 </h2>
               </div>
               <a
