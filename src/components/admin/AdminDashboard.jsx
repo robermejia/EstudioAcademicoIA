@@ -111,6 +111,125 @@ const QUESTIONS = [
   { id: 'creatividad_q5', dimension: 'Creatividad', text: 'Adapto los conocimientos aprendidos a nuevas situaciones.' }
 ];
 
+function probit(p) {
+  if (p < 0.5) {
+    const t = Math.sqrt(-2.0 * Math.log(p));
+    return -(t - ((2.515517 + 0.802853 * t + 0.010328 * t * t) /
+                 (1.0 + 1.432788 * t + 0.189269 * t * t + 0.001308 * t * t * t)));
+  } else {
+    const t = Math.sqrt(-2.0 * Math.log(1.0 - p));
+    return t - ((2.515517 + 0.802853 * t + 0.010328 * t * t) /
+                (1.0 + 1.432788 * t + 0.189269 * t * t + 0.001308 * t * t * t));
+  }
+}
+
+function normalCDF(x) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989422804 * Math.exp(-x * x / 2);
+  const prob = d * t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  return x >= 0 ? 1 - prob : prob;
+}
+
+function calculateShapiroWilk(data) {
+  const n = data.length;
+  if (n < 3) return { W: null, p: null };
+  
+  const sorted = [...data].sort((a, b) => a - b);
+  const mean = sorted.reduce((sum, val) => sum + val, 0) / n;
+  const denominator = sorted.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0);
+  if (denominator === 0) return { W: 1, p: 1 };
+
+  const m = [];
+  let sumMSq = 0;
+  for (let i = 1; i <= n; i++) {
+    const p = (i - 0.375) / (n + 0.25);
+    const val = probit(p);
+    m.push(val);
+    sumMSq += val * val;
+  }
+  
+  const sqrtSumMSq = Math.sqrt(sumMSq);
+  const a = m.map(val => val / sqrtSumMSq);
+
+  let numSum = 0;
+  for (let i = 0; i < n; i++) {
+    numSum += a[i] * sorted[i];
+  }
+  const W = Math.pow(numSum, 2) / denominator;
+
+  const y = Math.log(1 - W);
+  const u = Math.log(n);
+  
+  const m_mean = -2.706056 + 3.000104 * u - 2.010671 * Math.pow(u, 2) + 0.701389 * Math.pow(u, 3) - 0.090231 * Math.pow(u, 4);
+  const m_sd = Math.exp(-2.235948 + 0.901006 * u - 0.063587 * Math.pow(u, 2) - 0.029312 * Math.pow(u, 3) + 0.00787 * Math.pow(u, 4));
+  
+  const z = (y - m_mean) / m_sd;
+  const p = 1 - normalCDF(z);
+  return { W: W, p: p };
+}
+
+function calculateTTestPValue(t, df) {
+  if (df > 100) {
+    return 2 * (1 - normalCDF(Math.abs(t)));
+  }
+  const ab = Math.abs(t);
+  const w = ab / Math.sqrt(df);
+  const th = Math.atan(w);
+  if (df === 1) return 1.0 - 2.0 * th / Math.PI;
+  
+  let sm = Math.sin(th);
+  let cp = Math.cos(th);
+  if (df % 2 === 1) {
+    let pr = sm;
+    let tr = sm;
+    for (let i = 3; i <= df - 2; i += 2) {
+      tr = tr * cp * cp * (i - 1) / i;
+      pr += tr;
+    }
+    return 1.0 - 2.0 * (th + pr * cp) / Math.PI;
+  } else {
+    let pr = 1.0;
+    let tr = 1.0;
+    for (let i = 2; i <= df - 2; i += 2) {
+      tr = tr * cp * cp * (i - 1) / i;
+      pr += tr;
+    }
+    return 1.0 - pr * sm;
+  }
+}
+
+function calculateLevene(group1, group2) {
+  const n1 = group1.length;
+  const n2 = group2.length;
+  const N = n1 + n2;
+  if (n1 < 2 || n2 < 2) return { F: null, p: null };
+
+  const mean1 = group1.reduce((s, v) => s + v, 0) / n1;
+  const mean2 = group2.reduce((s, v) => s + v, 0) / n2;
+
+  const z1 = group1.map(v => Math.abs(v - mean1));
+  const z2 = group2.map(v => Math.abs(v - mean2));
+
+  const zMean1 = z1.reduce((s, v) => s + v, 0) / n1;
+  const zMean2 = z2.reduce((s, v) => s + v, 0) / n2;
+  const zGrandMean = (z1.reduce((s, v) => s + v, 0) + z2.reduce((s, v) => s + v, 0)) / N;
+
+  const ssBetween = n1 * Math.pow(zMean1 - zGrandMean, 2) + n2 * Math.pow(zMean2 - zGrandMean, 2);
+  const ssWithin = z1.reduce((s, v) => s + Math.pow(v - zMean1, 2), 0) + z2.reduce((s, v) => s + Math.pow(v - zMean2, 2), 0);
+
+  const df1 = 1;
+  const df2 = N - 2;
+
+  const msBetween = ssBetween / df1;
+  const msWithin = ssWithin / df2;
+
+  const F = msWithin > 0 ? msBetween / msWithin : 0;
+  const t = Math.sqrt(F);
+  const p = calculateTTestPValue(t, df2);
+
+  return { F: F, p: p };
+}
+
 export function AdminDashboard({ onLogoutSuccess }) {
   // Pestaña Activa: 'contenido' (Aiken's V) o 'criterio' (Piloto)
   const [activeTab, setActiveTab] = useState('contenido');
@@ -1176,120 +1295,158 @@ export function AdminDashboard({ onLogoutSuccess }) {
           </div>
 
           {/* ── VERIFICACIÓN DE SUPUESTOS ── */}
-          {responses.length > 0 && (
-            <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-indigo-500" />
-                  <h2 className="text-lg sm:text-xl font-bold text-text-main">
-                    Verificación de Supuestos Estadísticos
-                  </h2>
+          {responses.length > 0 && (() => {
+            const pretestScores = responses.map(r => {
+              let sum = 0, count = 0;
+              QUESTIONS.forEach(q => {
+                const v = r.pretest?.[q.id];
+                if (v !== undefined) { sum += v; count++; }
+              });
+              return count > 0 ? sum / count : null;
+            }).filter(val => val !== null);
+
+            const posttestScores = responses.map(r => {
+              let sum = 0, count = 0;
+              QUESTIONS.forEach(q => {
+                const v = r.posttest?.[q.id];
+                if (v !== undefined) { sum += v; count++; }
+              });
+              return count > 0 ? sum / count : null;
+            }).filter(val => val !== null);
+
+            const shapiroPre = calculateShapiroWilk(pretestScores);
+            const shapiroPost = calculateShapiroWilk(posttestScores);
+            const leveneResult = calculateLevene(pretestScores, posttestScores);
+
+            const isPreNormal = shapiroPre.p !== null && shapiroPre.p > 0.05;
+            const isPostNormal = shapiroPost.p !== null && shapiroPost.p > 0.05;
+            const isHomocedastic = leveneResult.p !== null && leveneResult.p > 0.05;
+
+            return (
+              <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-indigo-500" />
+                    <h2 className="text-lg sm:text-xl font-bold text-text-main">
+                      Verificación de Supuestos Estadísticos (Cálculo en Tiempo Real)
+                    </h2>
+                  </div>
+                  <span className="self-start sm:self-auto px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 whitespace-nowrap">
+                    Análisis Paramétrico
+                  </span>
                 </div>
-                <span className="self-start sm:self-auto px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 whitespace-nowrap">
-                  Análisis Paramétrico
-                </span>
-              </div>
-              <p className="text-xs text-text-muted mb-6 max-w-3xl">
-                Evaluación de las condiciones estadísticas requeridas para el uso de pruebas paramétricas (como la prueba t de Student para muestras emparejadas) en el análisis comparativo del Pretest y Posttest del grupo piloto.
-              </p>
+                <p className="text-xs text-text-muted mb-6 max-w-3xl">
+                  Evaluación dinámica de los supuestos requeridos para el uso de estadística paramétrica (como la prueba t de Student para muestras emparejadas), calculados sobre el promedio de todas las preguntas de cada participante en el Pretest y Posttest.
+                </p>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* 1. Prueba de Normalidad */}
-                <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4">
-                  <div className="flex items-center gap-2 pb-3 border-b border-border/40">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
-                      1
-                    </span>
-                    <h3 className="font-bold text-sm text-text-main">Prueba de Normalidad (Shapiro-Wilk)</h3>
-                  </div>
-                  <p className="text-xs text-text-muted">
-                    Evalúa si las puntuaciones de las variables de Efectividad del Aprendizaje y del uso de Herramientas de IA siguen una distribución normal. Adecuada para muestras de tamaño piloto (N ≤ 50).
-                  </p>
-                  
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-[11px] border-collapse text-left">
-                      <thead>
-                        <tr className="border-b border-border/80 text-text-muted font-bold">
-                          <th className="py-2 pr-2">Variable / Fase</th>
-                          <th className="py-2 px-2 text-center">Estadístico W</th>
-                          <th className="py-2 px-2 text-center">p-valor</th>
-                          <th className="py-2 pl-2 text-right">Interpretación</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border/30">
-                        <tr>
-                          <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest (Efectividad)</td>
-                          <td className="py-2.5 px-2 text-center font-mono">0.962</td>
-                          <td className="py-2.5 px-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">0.314</td>
-                          <td className="py-2.5 pl-2 text-right text-text-muted">Distribución Normal (p &gt; 0.05)</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2.5 pr-2 font-semibold text-text-main">Posttest (Efectividad)</td>
-                          <td className="py-2.5 px-2 text-center font-mono">0.958</td>
-                          <td className="py-2.5 px-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">0.245</td>
-                          <td className="py-2.5 pl-2 text-right text-text-muted">Distribución Normal (p &gt; 0.05)</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2.5 pr-2 font-semibold text-text-main">Herramientas IA (Uso)</td>
-                          <td className="py-2.5 px-2 text-center font-mono">0.947</td>
-                          <td className="py-2.5 px-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">0.178</td>
-                          <td className="py-2.5 pl-2 text-right text-text-muted">Distribución Normal (p &gt; 0.05)</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* 1. Prueba de Normalidad */}
+                  <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center gap-2 pb-3 border-b border-border/40">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
+                        1
+                      </span>
+                      <h3 className="font-bold text-sm text-text-main">Prueba de Normalidad (Shapiro-Wilk)</h3>
+                    </div>
+                    <p className="text-xs text-text-muted">
+                      Determina si las puntuaciones promedio de los participantes provienen de una población con distribución normal.
+                    </p>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-[11px] border-collapse text-left">
+                        <thead>
+                          <tr className="border-b border-border/80 text-text-muted font-bold">
+                            <th className="py-2 pr-2">Variable / Fase</th>
+                            <th className="py-2 px-2 text-center">Estadístico W</th>
+                            <th className="py-2 px-2 text-center">p-valor</th>
+                            <th className="py-2 pl-2 text-right">Interpretación</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/30">
+                          <tr>
+                            <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest (Averaje General)</td>
+                            <td className="py-2.5 px-2 text-center font-mono">{shapiroPre.W !== null ? shapiroPre.W.toFixed(4) : '—'}</td>
+                            <td className={`py-2.5 px-2 text-center font-mono font-bold ${isPreNormal ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                              {shapiroPre.p !== null ? shapiroPre.p.toFixed(4) : '—'}
+                            </td>
+                            <td className="py-2.5 pl-2 text-right text-text-muted">
+                              {shapiroPre.p === null ? 'Datos insuficientes' : isPreNormal ? 'Distribución Normal (p > 0.05)' : 'No Normal (p ≤ 0.05)'}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2.5 pr-2 font-semibold text-text-main">Posttest (Averaje General)</td>
+                            <td className="py-2.5 px-2 text-center font-mono">{shapiroPost.W !== null ? shapiroPost.W.toFixed(4) : '—'}</td>
+                            <td className={`py-2.5 px-2 text-center font-mono font-bold ${isPostNormal ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                              {shapiroPost.p !== null ? shapiroPost.p.toFixed(4) : '—'}
+                            </td>
+                            <td className="py-2.5 pl-2 text-right text-text-muted">
+                              {shapiroPost.p === null ? 'Datos insuficientes' : isPostNormal ? 'Distribución Normal (p > 0.05)' : 'No Normal (p ≤ 0.05)'}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className={`border rounded-xl p-3 flex items-start gap-2.5 ${isPreNormal && isPostNormal ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
+                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isPreNormal && isPostNormal ? 'text-emerald-500' : 'text-amber-500'}`} />
+                      <div className="text-[10px] text-text-muted leading-relaxed">
+                        <strong>Conclusión:</strong> {isPreNormal && isPostNormal 
+                          ? 'Al ser los p-valores mayores a 0.05, se acepta la hipótesis nula (H₀). Las puntuaciones promedio del grupo piloto siguen una distribución normal, validando el uso de estadística paramétrica.'
+                          : 'Al menos una de las fases presenta un p-valor menor o igual a 0.05, lo que sugiere el uso de pruebas no paramétricas (como Wilcoxon).'}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 flex items-start gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    <div className="text-[10px] text-text-muted leading-relaxed">
-                      <strong>Conclusión:</strong> Al ser todos los p-valores mayores a 0.05, se acepta la hipótesis nula (H₀). Los datos siguen una distribución normal, validando el uso de pruebas estadísticas paramétricas.
+                  {/* 2. Prueba de Igualdad de Varianzas */}
+                  <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center gap-2 pb-3 border-b border-border/40">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
+                        2
+                      </span>
+                      <h3 className="font-bold text-sm text-text-main">Prueba de Homocedasticidad (Prueba de Levene)</h3>
+                    </div>
+                    <p className="text-xs text-text-muted">
+                      Evalúa si las varianzas de las puntuaciones de todas las preguntas en el Pretest y Posttest son homogéneas.
+                    </p>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-[11px] border-collapse text-left">
+                        <thead>
+                          <tr className="border-b border-border/80 text-text-muted font-bold">
+                            <th className="py-2 pr-2">Comparación</th>
+                            <th className="py-2 px-2 text-center">Estadístico F</th>
+                            <th className="py-2 px-2 text-center">p-valor</th>
+                            <th className="py-2 pl-2 text-right">Interpretación</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/30">
+                          <tr>
+                            <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest vs Posttest</td>
+                            <td className="py-2.5 px-2 text-center font-mono">{leveneResult.F !== null ? leveneResult.F.toFixed(4) : '—'}</td>
+                            <td className={`py-2.5 px-2 text-center font-mono font-bold ${isHomocedastic ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                              {leveneResult.p !== null ? leveneResult.p.toFixed(4) : '—'}
+                            </td>
+                            <td className="py-2.5 pl-2 text-right text-text-muted">
+                              {leveneResult.p === null ? 'Datos insuficientes' : isHomocedastic ? 'Varianzas Iguales (p > 0.05)' : 'Varianzas Diferentes (p ≤ 0.05)'}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className={`border rounded-xl p-3 flex items-start gap-2.5 ${isHomocedastic ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
+                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isHomocedastic ? 'text-emerald-500' : 'text-amber-500'}`} />
+                      <div className="text-[10px] text-text-muted leading-relaxed">
+                        <strong>Conclusión:</strong> {isHomocedastic
+                          ? 'Al ser el p-valor mayor a 0.05, se acepta la hipótesis nula de igualdad de varianzas. Se cumple satisfactoriamente el supuesto de homocedasticidad.'
+                          : 'Al ser el p-valor menor o igual a 0.05, se rechaza la hipótesis nula. Se sugiere heterocedasticidad.'}
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                {/* 2. Prueba de Igualdad de Varianzas */}
-                <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4">
-                  <div className="flex items-center gap-2 pb-3 border-b border-border/40">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
-                      2
-                    </span>
-                    <h3 className="font-bold text-sm text-text-main">Prueba de Homocedasticidad (Prueba de Levene)</h3>
-                  </div>
-                  <p className="text-xs text-text-muted">
-                    Evalúa si las varianzas de las puntuaciones en las distintas mediciones son homogéneas e iguales (homocedasticidad).
-                  </p>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-[11px] border-collapse text-left">
-                      <thead>
-                        <tr className="border-b border-border/80 text-text-muted font-bold">
-                          <th className="py-2 pr-2">Comparación / Variable</th>
-                          <th className="py-2 px-2 text-center">Estadístico F</th>
-                          <th className="py-2 px-2 text-center">p-valor</th>
-                          <th className="py-2 pl-2 text-right">Interpretación</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border/30">
-                        <tr>
-                          <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest vs Posttest</td>
-                          <td className="py-2.5 px-2 text-center font-mono">1.182</td>
-                          <td className="py-2.5 px-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">0.281</td>
-                          <td className="py-2.5 pl-2 text-right text-text-muted">Varianzas Iguales (p &gt; 0.05)</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 flex items-start gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    <div className="text-[10px] text-text-muted leading-relaxed">
-                      <strong>Conclusión:</strong> Al ser el p-valor mayor a 0.05, se acepta la hipótesis nula de igualdad de varianzas. Se cumple satisfactoriamente el supuesto de homocedasticidad.
-                    </div>
-                  </div>
-                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ── TABLA GLOBAL DE PUNTUACIONES POR PREGUNTA (estilo Excel) ── */}
           {responses.length > 0 && (() => {
