@@ -130,42 +130,165 @@ function normalCDF(x) {
   return x >= 0 ? 1 - prob : prob;
 }
 
-function calculateShapiroWilk(data) {
+function calculateRyanJoiner(data) {
   const n = data.length;
-  if (n < 3) return { W: null, p: null };
-  
+  if (n < 4) return { RJ: null, p: null };
+
   const sorted = [...data].sort((a, b) => a - b);
   const mean = sorted.reduce((sum, val) => sum + val, 0) / n;
-  const denominator = sorted.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0);
-  if (denominator === 0) return { W: 1, p: 1 };
+  const denominatorSq = sorted.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0);
+  if (denominatorSq === 0) return { RJ: 1, p: 1 };
 
-  const m = [];
-  let sumMSq = 0;
-  for (let i = 1; i <= n; i++) {
-    const p = (i - 0.375) / (n + 0.25);
-    const val = probit(p);
-    m.push(val);
-    sumMSq += val * val;
+  // Calculate ranks, handling ties by averaging them (as Minitab does)
+  const ranks = new Array(n);
+  let i = 0;
+  while (i < n) {
+    let j = i;
+    while (j < n && sorted[j] === sorted[i]) {
+      j++;
+    }
+    const avgRank = 1 + (i + j - 1) / 2;
+    for (let k = i; k < j; k++) {
+      ranks[k] = avgRank;
+    }
+    i = j;
   }
-  
-  const sqrtSumMSq = Math.sqrt(sumMSq);
-  const a = m.map(val => val / sqrtSumMSq);
+
+  const b = [];
+  let sumBSq = 0;
+  for (let idx = 0; idx < n; idx++) {
+    const r = ranks[idx];
+    const p = (r - 0.375) / (n + 0.25);
+    const val = probit(p);
+    b.push(val);
+    sumBSq += val * val;
+  }
 
   let numSum = 0;
-  for (let i = 0; i < n; i++) {
-    numSum += a[i] * sorted[i];
+  for (let idx = 0; idx < n; idx++) {
+    numSum += (sorted[idx] - mean) * b[idx];
   }
-  const W = Math.pow(numSum, 2) / denominator;
 
-  const y = Math.log(1 - W);
-  const u = Math.log(n);
-  
-  const m_mean = -2.706056 + 3.000104 * u - 2.010671 * Math.pow(u, 2) + 0.701389 * Math.pow(u, 3) - 0.090231 * Math.pow(u, 4);
-  const m_sd = Math.exp(-2.235948 + 0.901006 * u - 0.063587 * Math.pow(u, 2) - 0.029312 * Math.pow(u, 3) + 0.00787 * Math.pow(u, 4));
-  
-  const z = (y - m_mean) / m_sd;
-  const p = 1 - normalCDF(z);
-  return { W: W, p: p };
+  const RJ = numSum / Math.sqrt(denominatorSq * sumBSq);
+
+  // Critical values formula for Ryan-Joiner test
+  const rj10 = 1.0071 - 0.1771 / Math.sqrt(n) - 0.0163 / n;
+  const rj05 = 0.9963 - 0.1776 / Math.sqrt(n) - 0.4447 / n;
+  const rj01 = 0.9776 - 0.1521 / Math.sqrt(n) - 0.2427 / n;
+
+  let p;
+  if (RJ >= rj10) {
+    p = 0.15; // > 0.10
+  } else if (RJ <= rj01) {
+    p = 0.005; // < 0.010
+  } else if (RJ >= rj05) {
+    const fraction = (RJ - rj05) / (rj10 - rj05);
+    p = 0.05 + 0.05 * fraction;
+  } else {
+    const fraction = (RJ - rj01) / (rj05 - rj01);
+    p = 0.01 + 0.04 * fraction;
+  }
+
+  return { RJ: RJ, p: p };
+}
+
+function calculateFTest(group1, group2) {
+  const n1 = group1.length;
+  const n2 = group2.length;
+  if (n1 < 2 || n2 < 2) return { F: null, p: null };
+
+  const mean1 = group1.reduce((s, v) => s + v, 0) / n1;
+  const mean2 = group2.reduce((s, v) => s + v, 0) / n2;
+
+  const var1 = group1.reduce((s, v) => s + Math.pow(v - mean1, 2), 0) / (n1 - 1);
+  const var2 = group2.reduce((s, v) => s + Math.pow(v - mean2, 2), 0) / (n2 - 1);
+
+  if (var1 === 0 || var2 === 0) return { F: 1, p: 1 };
+
+  let F, df1, df2;
+  if (var1 >= var2) {
+    F = var1 / var2;
+    df1 = n1 - 1;
+    df2 = n2 - 1;
+  } else {
+    F = var2 / var1;
+    df1 = n2 - 1;
+    df2 = n1 - 1;
+  }
+
+  // High-precision F-distribution CDF using Incomplete Beta Function
+  const logGamma = (x) => {
+    const p = [
+      0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+      771.32342877765313, -176.61502916214059, 12.507399420995724,
+      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
+    ];
+    if (x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * x)) - logGamma(1 - x);
+    x -= 1;
+    let a = p[0];
+    const t = x + 7.5;
+    for (let i = 1; i < p.length; i++) {
+      a += p[i] / (x + i);
+    }
+    return Math.log(Math.sqrt(2 * Math.PI)) + Math.log(a) + (x + 0.5) * Math.log(t) - t;
+  };
+
+  const logBeta = (x, y) => {
+    return logGamma(x) + logGamma(y) - logGamma(x + y);
+  };
+
+  const incBeta = (x, a, b) => {
+    if (x < 0 || x > 1) return NaN;
+    if (x === 0) return 0;
+    if (x === 1) return 1;
+    
+    const lbeta = logBeta(a, b);
+    const bt = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - lbeta);
+    
+    const qab = a + b;
+    const qap = a + 1;
+    const qam = a - 1;
+    let c = 1;
+    let d = 1 - qab * x / qap;
+    if (Math.abs(d) < 1e-30) d = 1e-30;
+    d = 1 / d;
+    let h = d;
+    
+    for (let m = 1; m <= 140; m++) {
+      const m2 = 2 * m;
+      let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d;
+      if (Math.abs(d) < 1e-30) d = 1e-30;
+      c = 1 + aa / c;
+      if (Math.abs(c) < 1e-30) c = 1e-30;
+      d = 1 / d;
+      h *= d * c;
+      
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d;
+      if (Math.abs(d) < 1e-30) d = 1e-30;
+      c = 1 + aa / c;
+      if (Math.abs(c) < 1e-30) c = 1e-30;
+      d = 1 / d;
+      h *= d * c;
+      
+      if (Math.abs(h - 1) < 1e-15) break;
+    }
+    
+    return bt * h / a;
+  };
+
+  const fCDF = (val, d1, d2) => {
+    const x = (d1 * val) / (d1 * val + d2);
+    return incBeta(x, d1 / 2, d2 / 2);
+  };
+
+  const cdfVal = fCDF(F, df1, df2);
+  let p = 2 * (1 - cdfVal);
+  if (p > 1) p = 1;
+  if (p < 0) p = 0;
+
+  return { F: F, p: p };
 }
 
 function calculateTTestPValue(t, df) {
@@ -198,36 +321,31 @@ function calculateTTestPValue(t, df) {
   }
 }
 
-function calculateLevene(group1, group2) {
-  const n1 = group1.length;
-  const n2 = group2.length;
-  const N = n1 + n2;
-  if (n1 < 2 || n2 < 2) return { F: null, p: null };
+function calculatePairedTTest(group1, group2) {
+  const n = Math.min(group1.length, group2.length);
+  if (n < 2) return { t: null, p: null, meanDiff: null, sdDiff: null, seDiff: null, df: 0 };
 
-  const mean1 = group1.reduce((s, v) => s + v, 0) / n1;
-  const mean2 = group2.reduce((s, v) => s + v, 0) / n2;
+  const diffs = [];
+  for (let i = 0; i < n; i++) {
+    diffs.push(group1[i] - group2[i]);
+  }
 
-  const z1 = group1.map(v => Math.abs(v - mean1));
-  const z2 = group2.map(v => Math.abs(v - mean2));
+  const meanDiff = diffs.reduce((s, v) => s + v, 0) / n;
+  const varianceDiff = diffs.reduce((s, v) => s + Math.pow(v - meanDiff, 2), 0) / (n - 1);
+  const sdDiff = Math.sqrt(varianceDiff);
+  const seDiff = sdDiff / Math.sqrt(n);
 
-  const zMean1 = z1.reduce((s, v) => s + v, 0) / n1;
-  const zMean2 = z2.reduce((s, v) => s + v, 0) / n2;
-  const zGrandMean = (z1.reduce((s, v) => s + v, 0) + z2.reduce((s, v) => s + v, 0)) / N;
+  const t = seDiff > 0 ? meanDiff / seDiff : 0;
+  const p = calculateTTestPValue(t, n - 1);
 
-  const ssBetween = n1 * Math.pow(zMean1 - zGrandMean, 2) + n2 * Math.pow(zMean2 - zGrandMean, 2);
-  const ssWithin = z1.reduce((s, v) => s + Math.pow(v - zMean1, 2), 0) + z2.reduce((s, v) => s + Math.pow(v - zMean2, 2), 0);
-
-  const df1 = 1;
-  const df2 = N - 2;
-
-  const msBetween = ssBetween / df1;
-  const msWithin = ssWithin / df2;
-
-  const F = msWithin > 0 ? msBetween / msWithin : 0;
-  const t = Math.sqrt(F);
-  const p = calculateTTestPValue(t, df2);
-
-  return { F: F, p: p };
+  return {
+    t: t,
+    p: p,
+    meanDiff: meanDiff,
+    sdDiff: sdDiff,
+    seDiff: seDiff,
+    df: n - 1
+  };
 }
 
 export function AdminDashboard({ onLogoutSuccess }) {
@@ -1296,31 +1414,66 @@ export function AdminDashboard({ onLogoutSuccess }) {
 
           {/* ── VERIFICACIÓN DE SUPUESTOS ── */}
           {responses.length > 0 && (() => {
-            const pretestScores = responses.map(r => {
-              let sum = 0, count = 0;
+            const processedResponses = responses.map(r => {
+              let preSum = 0, preCount = 0;
               QUESTIONS.forEach(q => {
                 const v = r.pretest?.[q.id];
-                if (v !== undefined) { sum += v; count++; }
+                if (v !== undefined) { preSum += v; preCount++; }
               });
-              return count > 0 ? sum / count : null;
-            }).filter(val => val !== null);
+              const preAvg = preCount > 0 ? Math.round((preSum / preCount) * 100) / 100 : null;
 
-            const posttestScores = responses.map(r => {
-              let sum = 0, count = 0;
+              let postSum = 0, postCount = 0;
               QUESTIONS.forEach(q => {
                 const v = r.posttest?.[q.id];
-                if (v !== undefined) { sum += v; count++; }
+                if (v !== undefined) { postSum += v; postCount++; }
               });
-              return count > 0 ? sum / count : null;
-            }).filter(val => val !== null);
+              const postAvg = postCount > 0 ? Math.round((postSum / postCount) * 100) / 100 : null;
 
-            const shapiroPre = calculateShapiroWilk(pretestScores);
-            const shapiroPost = calculateShapiroWilk(posttestScores);
-            const leveneResult = calculateLevene(pretestScores, posttestScores);
+              return { preAvg, postAvg };
+            });
 
-            const isPreNormal = shapiroPre.p !== null && shapiroPre.p > 0.05;
-            const isPostNormal = shapiroPost.p !== null && shapiroPost.p > 0.05;
-            const isHomocedastic = leveneResult.p !== null && leveneResult.p > 0.05;
+            const pretestScores = processedResponses
+              .map(r => r.preAvg)
+              .filter(val => val !== null);
+
+            const posttestScores = processedResponses
+              .map(r => r.postAvg)
+              .filter(val => val !== null);
+
+            const pairedPre = [];
+            const pairedPost = [];
+            processedResponses.forEach(r => {
+              if (r.preAvg !== null && r.postAvg !== null) {
+                pairedPre.push(r.preAvg);
+                pairedPost.push(r.postAvg);
+              }
+            });
+
+            const rjPre = calculateRyanJoiner(pretestScores);
+            const rjPost = calculateRyanJoiner(posttestScores);
+            const fTestResult = calculateFTest(pretestScores, posttestScores);
+
+            const getMean = (data) => {
+              if (data.length === 0) return 0;
+              return data.reduce((s, v) => s + v, 0) / data.length;
+            };
+
+            const getSD = (data) => {
+              const n = data.length;
+              if (n <= 1) return 0;
+              const mean = getMean(data);
+              const variance = data.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / (n - 1);
+              return Math.sqrt(variance);
+            };
+
+            const preMean = getMean(pretestScores);
+            const preSD = getSD(pretestScores);
+            const postMean = getMean(posttestScores);
+            const postSD = getSD(posttestScores);
+
+            const isPreNormal = rjPre.p !== null && rjPre.p > 0.05;
+            const isPostNormal = rjPost.p !== null && rjPost.p > 0.05;
+            const isHomocedastic = fTestResult.p !== null && fTestResult.p > 0.05;
 
             return (
               <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
@@ -1339,122 +1492,252 @@ export function AdminDashboard({ onLogoutSuccess }) {
                   Evaluación dinámica de los supuestos requeridos para el uso de estadística paramétrica (como la prueba t de Student para muestras emparejadas), calculados sobre el promedio de todas las preguntas de cada participante en el Pretest y Posttest.
                 </p>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* 1. Prueba de Normalidad */}
-                  <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4">
-                    <div className="flex items-center gap-2 pb-3 border-b border-border/40">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
-                        1
-                      </span>
-                      <h3 className="font-bold text-sm text-text-main">Prueba de Normalidad (Shapiro-Wilk)</h3>
-                    </div>
-                    <p className="text-xs text-text-muted">
-                      Determina si las puntuaciones promedio de los participantes provienen de una población con distribución normal.
-                    </p>
-
-                    <div className="bg-surface/50 border border-border/40 p-2.5 rounded-xl text-[10px] text-text-muted space-y-1">
-                      <div className="font-semibold text-text-main">Planteamiento de Hipótesis:</div>
-                      <div>• <strong>H₀ (Hipótesis Nula):</strong> Los datos del promedio del cuestionario siguen una distribución normal.</div>
-                      <div>• <strong>H₁ (Hipótesis Alternativa):</strong> Los datos del promedio del cuestionario no siguen una distribución normal.</div>
-                      <div>• <strong>Criterio de Decisión:</strong> Si <strong>p-valor &gt; 0.05</strong>, se acepta H₀. Si p-valor ≤ 0.05, se rechaza H₀.</div>
-                    </div>
-                    
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-[11px] border-collapse text-left">
-                        <thead>
-                          <tr className="border-b border-border/80 text-text-muted font-bold">
-                            <th className="py-2 pr-2">Variable / Fase</th>
-                            <th className="py-2 px-2 text-center">N (Muestra)</th>
-                            <th className="py-2 px-2 text-center">Estadístico W</th>
-                            <th className="py-2 px-2 text-center">p-valor (p)</th>
-                            <th className="py-2 pl-2 text-right">Interpretación</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/30">
-                          <tr>
-                            <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest (Promedio de cada participante)</td>
-                            <td className="py-2.5 px-2 text-center font-mono">{pretestScores.length}</td>
-                            <td className="py-2.5 px-2 text-center font-mono">{shapiroPre.W !== null ? shapiroPre.W.toFixed(4) : '—'}</td>
-                            <td className={`py-2.5 px-2 text-center font-mono font-bold ${isPreNormal ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                              {shapiroPre.p !== null ? `p = ${shapiroPre.p.toFixed(4)}` : '—'}
-                            </td>
-                            <td className="py-2.5 pl-2 text-right text-text-muted">
-                              {shapiroPre.p === null ? 'Datos insuficientes' : isPreNormal ? 'Distribución Normal (p > 0.05)' : 'No Normal (p ≤ 0.05)'}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="py-2.5 pr-2 font-semibold text-text-main">Posttest (Promedio de cada participante)</td>
-                            <td className="py-2.5 px-2 text-center font-mono">{posttestScores.length}</td>
-                            <td className="py-2.5 px-2 text-center font-mono">{shapiroPost.W !== null ? shapiroPost.W.toFixed(4) : '—'}</td>
-                            <td className={`py-2.5 px-2 text-center font-mono font-bold ${isPostNormal ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                              {shapiroPost.p !== null ? `p = ${shapiroPost.p.toFixed(4)}` : '—'}
-                            </td>
-                            <td className="py-2.5 pl-2 text-right text-text-muted">
-                              {shapiroPost.p === null ? 'Datos insuficientes' : isPostNormal ? 'Distribución Normal (p > 0.05)' : 'No Normal (p ≤ 0.05)'}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className={`border rounded-xl p-3 flex items-start gap-2.5 ${isPreNormal && isPostNormal ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
-                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isPreNormal && isPostNormal ? 'text-emerald-500' : 'text-amber-500'}`} />
-                      <div className="text-[10px] text-text-muted leading-relaxed">
-                        <strong>Conclusión de Normalidad:</strong> {shapiroPre.p !== null && shapiroPost.p !== null ? (
-                          isPreNormal && isPostNormal ? (
-                            `Dado que los p-valores calculados (Pretest p = ${shapiroPre.p.toFixed(4)}, Posttest p = ${shapiroPost.p.toFixed(4)}) son superiores al nivel de significancia de 0.05, se acepta la hipótesis nula (H₀). Se demuestra estadísticamente que los datos de ambas fases siguen una distribución normal.`
-                          ) : (
-                            `Debido a que se obtuvo un p-valor inferior o igual a 0.05 (Pretest p = ${shapiroPre.p.toFixed(4)}, Posttest p = ${shapiroPost.p.toFixed(4)}), se rechaza la hipótesis nula (H₀) para al menos una de las fases, sugiriendo el uso de estadística no paramétrica.`
-                          )
-                        ) : 'Datos insuficientes para emitir una conclusión estadística.'}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  {/* Tabla de Promedios Individuales */}
+                  <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 pb-3 border-b border-border/40">
+                        <FileText className="w-4 h-4 text-indigo-500" />
+                        <h3 className="font-bold text-sm text-text-main">Promedio Individual por Participante</h3>
                       </div>
+                      <p className="text-[11px] text-text-muted mb-3 leading-relaxed">
+                        Puntuación promedio del cuestionario completo para cada participante en ambas fases (usada para calcular las pruebas de normalidad y varianzas).
+                      </p>
+                      
+                      <div className="overflow-y-auto max-h-[320px] border border-border/60 rounded-xl bg-card">
+                        <table className="w-full text-[11px] border-collapse text-left">
+                          <thead className="sticky top-0 bg-surface border-b border-border/60">
+                            <tr className="text-text-muted font-bold text-[10px] uppercase tracking-wider">
+                              <th className="py-2 px-3">Sujeto</th>
+                              <th className="py-2 px-2 text-center">PRETEST</th>
+                              <th className="py-2 px-2 text-center">POSTTEST</th>
+                              <th className="py-2 px-3 text-right">DIF.</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/20">
+                            {responses.map((r, idx) => {
+                              let preSum = 0, preCount = 0;
+                              let postSum = 0, postCount = 0;
+                              QUESTIONS.forEach(q => {
+                                const preVal = r.pretest?.[q.id];
+                                if (preVal !== undefined) { preSum += preVal; preCount++; }
+                                const postVal = r.posttest?.[q.id];
+                                if (postVal !== undefined) { postSum += postVal; postCount++; }
+                              });
+                              const preAvg = preCount > 0 ? preSum / preCount : null;
+                              const postAvg = postCount > 0 ? postSum / postCount : null;
+                              const diff = preAvg !== null && postAvg !== null ? (postAvg - preAvg).toFixed(2) : '—';
+                              
+                              return (
+                                <tr key={r.id} className="hover:bg-primary/5 transition-colors">
+                                  <td className="py-2 px-3 font-mono font-bold text-primary">
+                                    {r.participantId || `P${idx + 1}`}
+                                  </td>
+                                  <td className="py-2 px-2 text-center font-mono">
+                                    {preAvg !== null ? preAvg.toFixed(2) : '—'}
+                                  </td>
+                                  <td className="py-2 px-2 text-center font-mono font-bold text-text-main">
+                                    {postAvg !== null ? postAvg.toFixed(2) : '—'}
+                                  </td>
+                                  <td className={`py-2 px-3 text-right font-mono font-bold ${parseFloat(diff) > 0 ? 'text-emerald-600 dark:text-emerald-400' : parseFloat(diff) < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-text-muted'}`}>
+                                    {parseFloat(diff) > 0 ? `+${diff}` : diff}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-text-muted italic pt-2 border-t border-border/20">
+                      * Estos datos se recalculan dinámicamente con cada nuevo test ingresado.
                     </div>
                   </div>
 
-                  {/* 2. Prueba de Igualdad de Varianzas */}
-                  <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4">
-                    <div className="flex items-center gap-2 pb-3 border-b border-border/40">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
-                        2
-                      </span>
-                      <h3 className="font-bold text-sm text-text-main">Prueba de Homocedasticidad (Prueba de Levene)</h3>
-                    </div>
-                    <p className="text-xs text-text-muted">
-                      Evalúa si las varianzas de las puntuaciones de todas las preguntas en el Pretest y Posttest son homogéneas.
-                    </p>
-
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-[11px] border-collapse text-left">
-                        <thead>
-                          <tr className="border-b border-border/80 text-text-muted font-bold">
-                            <th className="py-2 pr-2">Comparación</th>
-                            <th className="py-2 px-2 text-center">Estadístico F</th>
-                            <th className="py-2 px-2 text-center">p-valor</th>
-                            <th className="py-2 pl-2 text-right">Interpretación</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/30">
-                          <tr>
-                            <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest vs Posttest</td>
-                            <td className="py-2.5 px-2 text-center font-mono">{leveneResult.F !== null ? leveneResult.F.toFixed(4) : '—'}</td>
-                            <td className={`py-2.5 px-2 text-center font-mono font-bold ${isHomocedastic ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                              {leveneResult.p !== null ? leveneResult.p.toFixed(4) : '—'}
-                            </td>
-                            <td className="py-2.5 pl-2 text-right text-text-muted">
-                              {leveneResult.p === null ? 'Datos insuficientes' : isHomocedastic ? 'Varianzas Iguales (p > 0.05)' : 'Varianzas Diferentes (p ≤ 0.05)'}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className={`border rounded-xl p-3 flex items-start gap-2.5 ${isHomocedastic ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
-                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isHomocedastic ? 'text-emerald-500' : 'text-amber-500'}`} />
-                      <div className="text-[10px] text-text-muted leading-relaxed">
-                        <strong>Conclusión:</strong> {isHomocedastic
-                          ? 'Al ser el p-valor mayor a 0.05, se acepta la hipótesis nula de igualdad de varianzas. Se cumple satisfactoriamente el supuesto de homocedasticidad.'
-                          : 'Al ser el p-valor menor o igual a 0.05, se rechaza la hipótesis nula. Se sugiere heterocedasticidad.'}
+                  {/* Resultados de Pruebas de Supuestos */}
+                  <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* a) Prueba de Normalidad para Pretest */}
+                    <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center gap-2 pb-2.5 border-b border-border/40">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
+                          A
+                        </span>
+                        <h3 className="font-bold text-xs text-text-main uppercase tracking-wider">Prueba de Normalidad para Pretest</h3>
                       </div>
+                      
+                      <div className="text-[10px] space-y-1 bg-card/65 p-3 border border-border/40 rounded-xl font-mono text-text-muted">
+                        <div><strong>H₀:</strong> Los datos de pretest provienen de una población con distribución normal.</div>
+                        <div><strong>Hₐ:</strong> Los datos de pretest no provienen de una población con distribución normal.</div>
+                      </div>
+
+                      <div className="bg-surface/50 border border-border/40 p-2.5 rounded-xl text-[10px] text-text-muted space-y-1">
+                        <div className="font-bold text-text-main">Criterio:</div>
+                        <p>Para un nivel de confianza del 95%, si el p-valor &lt; 0.05, rechazo la hipótesis nula (H₀).</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-center text-[10px] bg-card/40 p-2 rounded-xl border border-border/20 font-mono">
+                        <div>
+                          <span className="text-text-muted block">Estadístico RJ</span>
+                          <span className="text-sm font-bold text-text-main">{rjPre.RJ !== null ? rjPre.RJ.toFixed(3) : '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-text-muted block">p-valor</span>
+                          <span className="text-sm font-bold text-text-main">{rjPre.p !== null ? (rjPre.p < 0.01 ? '<0.010' : rjPre.p.toFixed(3)) : '—'}</span>
+                        </div>
+                      </div>
+
+                      <div className={`border rounded-xl p-3 flex items-start gap-2 ${isPreNormal ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}>
+                        <CheckCircle className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPreNormal ? 'text-emerald-500' : 'text-rose-500'}`} />
+                        <div className="text-[10px] text-text-muted leading-relaxed">
+                          <strong>Decisión:</strong> {rjPre.p !== null ? (
+                            isPreNormal ? (
+                              `El p-valor ${rjPre.p.toFixed(3)} > 0.05; por lo tanto, acepto la hipótesis nula (H₀). Los datos de pretest provienen de una población con distribución normal.`
+                            ) : (
+                              `El p-valor ${rjPre.p < 0.01 ? '<0.010' : rjPre.p.toFixed(3)} ≤ 0.05; por lo tanto, rechazo la hipótesis nula (H₀). Los datos de pretest no provienen de una población con distribución normal.`
+                            )
+                          ) : 'Datos insuficientes.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* b) Prueba de Normalidad para Posttest */}
+                    <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center gap-2 pb-2.5 border-b border-border/40">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
+                          B
+                        </span>
+                        <h3 className="font-bold text-xs text-text-main uppercase tracking-wider">Prueba de Normalidad para Posttest</h3>
+                      </div>
+                      
+                      <div className="text-[10px] space-y-1 bg-card/65 p-3 border border-border/40 rounded-xl font-mono text-text-muted">
+                        <div><strong>H₀:</strong> Los datos de posttest provienen de una población con distribución normal.</div>
+                        <div><strong>Hₐ:</strong> Los datos de posttest no provienen de una población con distribución normal.</div>
+                      </div>
+
+                      <div className="bg-surface/50 border border-border/40 p-2.5 rounded-xl text-[10px] text-text-muted space-y-1">
+                        <div className="font-bold text-text-main">Criterio:</div>
+                        <p>Para un nivel de confianza del 95%, si el p-valor &lt; 0.05, rechazo la hipótesis nula (H₀).</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-center text-[10px] bg-card/40 p-2 rounded-xl border border-border/20 font-mono">
+                        <div>
+                          <span className="text-text-muted block">Estadístico RJ</span>
+                          <span className="text-sm font-bold text-text-main">{rjPost.RJ !== null ? rjPost.RJ.toFixed(3) : '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-text-muted block">p-valor</span>
+                          <span className="text-sm font-bold text-text-main">{rjPost.p !== null ? (rjPost.p < 0.01 ? '<0.010' : rjPost.p.toFixed(3)) : '—'}</span>
+                        </div>
+                      </div>
+
+                      <div className={`border rounded-xl p-3 flex items-start gap-2 ${isPostNormal ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}>
+                        <CheckCircle className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPostNormal ? 'text-emerald-500' : 'text-rose-500'}`} />
+                        <div className="text-[10px] text-text-muted leading-relaxed">
+                          <strong>Decisión:</strong> {rjPost.p !== null ? (
+                            isPostNormal ? (
+                              `El p-valor ${rjPost.p.toFixed(3)} > 0.05; por lo tanto, acepto la hipótesis nula (H₀). Los datos de posttest provienen de una población con distribución normal.`
+                            ) : (
+                              `El p-valor ${rjPost.p < 0.01 ? '<0.010' : rjPost.p.toFixed(3)} ≤ 0.05; por lo tanto, rechazo la hipótesis nula (H₀). Los datos de posttest no provienen de una población con distribución normal.`
+                            )
+                          ) : 'Datos insuficientes.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* c) Prueba de Igualdad de Varianzas */}
+                    <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center gap-2 pb-2.5 border-b border-border/40">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
+                          C
+                        </span>
+                        <h3 className="font-bold text-xs text-text-main uppercase tracking-wider">Prueba de Igualdad de Varianzas</h3>
+                      </div>
+                      
+                      <div className="text-[10px] space-y-1 bg-card/65 p-3 border border-border/40 rounded-xl font-mono text-text-muted">
+                        <div><strong>H₀:</strong> Las varianzas de los grupos son iguales.</div>
+                        <div><strong>Hₐ:</strong> Al menos una varianza es diferente a las demás.</div>
+                      </div>
+
+                      <div className="bg-surface/50 border border-border/40 p-2.5 rounded-xl text-[10px] text-text-muted space-y-1">
+                        <div className="font-bold text-text-main">Criterio:</div>
+                        <p>Para un nivel de confianza del 95%, si el p-valor &lt; 0.05, rechazo la hipótesis nula (H₀).</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-center text-[10px] bg-card/40 p-2 rounded-xl border border-border/20 font-mono">
+                        <div>
+                          <span className="text-text-muted block">Estadístico F</span>
+                          <span className="text-sm font-bold text-text-main">{fTestResult.F !== null ? fTestResult.F.toFixed(3) : '—'}</span>
+                        </div>
+                        <div>
+                          <span className="text-text-muted block">p-valor</span>
+                          <span className="text-sm font-bold text-text-main">{fTestResult.p !== null ? fTestResult.p.toFixed(3) : '—'}</span>
+                        </div>
+                      </div>
+
+                      <div className={`border rounded-xl p-3 flex items-start gap-2 ${isHomocedastic ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}>
+                        <CheckCircle className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isHomocedastic ? 'text-emerald-500' : 'text-rose-500'}`} />
+                        <div className="text-[10px] text-text-muted leading-relaxed">
+                          <strong>Decisión:</strong> {fTestResult.p !== null ? (
+                            isHomocedastic ? (
+                              `El p-valor ${fTestResult.p.toFixed(3)} > 0.05; por lo tanto, acepto la hipótesis nula (H₀). Las varianzas de los grupos son iguales.`
+                            ) : (
+                              `El p-valor ${fTestResult.p.toFixed(3)} ≤ 0.05; por lo tanto, rechazo la hipótesis nula (H₀). Las varianzas de los grupos no son iguales.`
+                            )
+                          ) : 'Datos insuficientes.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* d) Prueba T de Student para Muestras Relacionadas */}
+                    <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center gap-2 pb-2.5 border-b border-border/40">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
+                          D
+                        </span>
+                        <h3 className="font-bold text-xs text-text-main uppercase tracking-wider">T de Student (Muestras Relacionadas)</h3>
+                      </div>
+                      
+                      {(() => {
+                        const tResult = calculatePairedTTest(pairedPre, pairedPost);
+                        const isTDiff = tResult.p !== null && tResult.p < 0.05;
+                        return (
+                          <>
+                            <div className="text-[10px] space-y-1 bg-card/65 p-3 border border-border/40 rounded-xl font-mono text-text-muted">
+                              <div><strong>H₀:</strong> Las medias de los grupos son iguales. (No hay cambio)</div>
+                              <div><strong>Hₐ:</strong> Las medias de los grupos no son iguales. (Hay cambio)</div>
+                            </div>
+
+                            <div className="bg-surface/50 border border-border/40 p-2.5 rounded-xl text-[10px] text-text-muted space-y-1">
+                              <div className="font-bold text-text-main">Criterio:</div>
+                              <p>Para un nivel de confianza del 95%, si el p-valor &lt; 0.05, rechazo la hipótesis nula (H₀).</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-center text-[10px] bg-card/40 p-2 rounded-xl border border-border/20 font-mono">
+                              <div>
+                                <span className="text-text-muted block">Valor T</span>
+                                <span className="text-sm font-bold text-text-main">{tResult.t !== null ? tResult.t.toFixed(3) : '—'}</span>
+                              </div>
+                              <div>
+                                <span className="text-text-muted block">p-valor</span>
+                                <span className="text-sm font-bold text-text-main">{tResult.p !== null ? (tResult.p < 0.001 ? '0.000' : tResult.p.toFixed(3)) : '—'}</span>
+                              </div>
+                            </div>
+
+                            <div className={`border rounded-xl p-3 flex items-start gap-2 ${isTDiff ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}>
+                              <CheckCircle className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isTDiff ? 'text-emerald-500' : 'text-rose-500'}`} />
+                              <div className="text-[10px] text-text-muted leading-relaxed">
+                                <strong>Decisión:</strong> {tResult.p !== null ? (
+                                  isTDiff ? (
+                                    `El p-valor ${tResult.p < 0.001 ? '0.000' : tResult.p.toFixed(3)} < 0.05; por lo tanto, rechazo la hipótesis nula (H₀). Las medias de los grupos no son iguales (existe diferencia significativa en el aprendizaje).`
+                                  ) : (
+                                    `El p-valor ${tResult.p.toFixed(3)} ≥ 0.05; por lo tanto, acepto la hipótesis nula (H₀). Las medias de los grupos son iguales (no hay diferencia significativa).`
+                                  )
+                                ) : 'Datos insuficientes.'}
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
