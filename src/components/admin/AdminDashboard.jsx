@@ -1351,6 +1351,13 @@ export function AdminDashboard({ onLogoutSuccess }) {
                     <p className="text-xs text-text-muted">
                       Determina si las puntuaciones promedio de los participantes provienen de una población con distribución normal.
                     </p>
+
+                    <div className="bg-surface/50 border border-border/40 p-2.5 rounded-xl text-[10px] text-text-muted space-y-1">
+                      <div className="font-semibold text-text-main">Planteamiento de Hipótesis:</div>
+                      <div>• <strong>H₀ (Hipótesis Nula):</strong> Los datos del promedio del cuestionario siguen una distribución normal.</div>
+                      <div>• <strong>H₁ (Hipótesis Alternativa):</strong> Los datos del promedio del cuestionario no siguen una distribución normal.</div>
+                      <div>• <strong>Criterio de Decisión:</strong> Si <strong>p-valor &gt; 0.05</strong>, se acepta H₀. Si p-valor ≤ 0.05, se rechaza H₀.</div>
+                    </div>
                     
                     <div className="overflow-x-auto">
                       <table className="w-full text-[11px] border-collapse text-left">
@@ -1358,7 +1365,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
                           <tr className="border-b border-border/80 text-text-muted font-bold">
                             <th className="py-2 pr-2">Variable / Fase</th>
                             <th className="py-2 px-2 text-center">Estadístico W</th>
-                            <th className="py-2 px-2 text-center">p-valor</th>
+                            <th className="py-2 px-2 text-center">p-valor (p)</th>
                             <th className="py-2 pl-2 text-right">Interpretación</th>
                           </tr>
                         </thead>
@@ -1367,7 +1374,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
                             <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest (Averaje General)</td>
                             <td className="py-2.5 px-2 text-center font-mono">{shapiroPre.W !== null ? shapiroPre.W.toFixed(4) : '—'}</td>
                             <td className={`py-2.5 px-2 text-center font-mono font-bold ${isPreNormal ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                              {shapiroPre.p !== null ? shapiroPre.p.toFixed(4) : '—'}
+                              {shapiroPre.p !== null ? `p = ${shapiroPre.p.toFixed(4)}` : '—'}
                             </td>
                             <td className="py-2.5 pl-2 text-right text-text-muted">
                               {shapiroPre.p === null ? 'Datos insuficientes' : isPreNormal ? 'Distribución Normal (p > 0.05)' : 'No Normal (p ≤ 0.05)'}
@@ -1377,7 +1384,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
                             <td className="py-2.5 pr-2 font-semibold text-text-main">Posttest (Averaje General)</td>
                             <td className="py-2.5 px-2 text-center font-mono">{shapiroPost.W !== null ? shapiroPost.W.toFixed(4) : '—'}</td>
                             <td className={`py-2.5 px-2 text-center font-mono font-bold ${isPostNormal ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                              {shapiroPost.p !== null ? shapiroPost.p.toFixed(4) : '—'}
+                              {shapiroPost.p !== null ? `p = ${shapiroPost.p.toFixed(4)}` : '—'}
                             </td>
                             <td className="py-2.5 pl-2 text-right text-text-muted">
                               {shapiroPost.p === null ? 'Datos insuficientes' : isPostNormal ? 'Distribución Normal (p > 0.05)' : 'No Normal (p ≤ 0.05)'}
@@ -1390,9 +1397,13 @@ export function AdminDashboard({ onLogoutSuccess }) {
                     <div className={`border rounded-xl p-3 flex items-start gap-2.5 ${isPreNormal && isPostNormal ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
                       <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isPreNormal && isPostNormal ? 'text-emerald-500' : 'text-amber-500'}`} />
                       <div className="text-[10px] text-text-muted leading-relaxed">
-                        <strong>Conclusión:</strong> {isPreNormal && isPostNormal 
-                          ? 'Al ser los p-valores mayores a 0.05, se acepta la hipótesis nula (H₀). Las puntuaciones promedio del grupo piloto siguen una distribución normal, validando el uso de estadística paramétrica.'
-                          : 'Al menos una de las fases presenta un p-valor menor o igual a 0.05, lo que sugiere el uso de pruebas no paramétricas (como Wilcoxon).'}
+                        <strong>Conclusión de Normalidad:</strong> {shapiroPre.p !== null && shapiroPost.p !== null ? (
+                          isPreNormal && isPostNormal ? (
+                            `Dado que los p-valores calculados (Pretest p = ${shapiroPre.p.toFixed(4)}, Posttest p = ${shapiroPost.p.toFixed(4)}) son superiores al nivel de significancia de 0.05, se acepta la hipótesis nula (H₀). Se demuestra estadísticamente que los datos de ambas fases siguen una distribución normal.`
+                          ) : (
+                            `Debido a que se obtuvo un p-valor inferior o igual a 0.05 (Pretest p = ${shapiroPre.p.toFixed(4)}, Posttest p = ${shapiroPost.p.toFixed(4)}), se rechaza la hipótesis nula (H₀) para al menos una de las fases, sugiriendo el uso de estadística no paramétrica.`
+                          )
+                        ) : 'Datos insuficientes para emitir una conclusión estadística.'}
                       </div>
                     </div>
                   </div>
