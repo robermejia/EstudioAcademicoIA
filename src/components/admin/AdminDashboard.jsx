@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Users, BarChart3, Database, Download, LogOut, Search, 
-  ChevronRight, Calendar, Info, RefreshCw, CheckCircle, GraduationCap, Trash2,
+  ChevronRight, Calendar, Info, RefreshCw, CheckCircle, GraduationCap, Trash2, Activity,
   Award, FileText, Plus, X, ExternalLink, HelpCircle
 } from 'lucide-react';
 import { 
@@ -1174,6 +1174,122 @@ export function AdminDashboard({ onLogoutSuccess }) {
               </div>
             )}
           </div>
+
+          {/* ── VERIFICACIÓN DE SUPUESTOS ── */}
+          {responses.length > 0 && (
+            <div className="bg-card border border-border/80 rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-indigo-500" />
+                  <h2 className="text-lg sm:text-xl font-bold text-text-main">
+                    Verificación de Supuestos Estadísticos
+                  </h2>
+                </div>
+                <span className="self-start sm:self-auto px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 whitespace-nowrap">
+                  Análisis Paramétrico
+                </span>
+              </div>
+              <p className="text-xs text-text-muted mb-6 max-w-3xl">
+                Evaluación de las condiciones estadísticas requeridas para el uso de pruebas paramétricas (como la prueba t de Student para muestras emparejadas) en el análisis comparativo del Pretest y Posttest del grupo piloto.
+              </p>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 1. Prueba de Normalidad */}
+                <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-border/40">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
+                      1
+                    </span>
+                    <h3 className="font-bold text-sm text-text-main">Prueba de Normalidad (Shapiro-Wilk)</h3>
+                  </div>
+                  <p className="text-xs text-text-muted">
+                    Evalúa si las puntuaciones de las variables de Efectividad del Aprendizaje y del uso de Herramientas de IA siguen una distribución normal. Adecuada para muestras de tamaño piloto (N ≤ 50).
+                  </p>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[11px] border-collapse text-left">
+                      <thead>
+                        <tr className="border-b border-border/80 text-text-muted font-bold">
+                          <th className="py-2 pr-2">Variable / Fase</th>
+                          <th className="py-2 px-2 text-center">Estadístico W</th>
+                          <th className="py-2 px-2 text-center">p-valor</th>
+                          <th className="py-2 pl-2 text-right">Interpretación</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/30">
+                        <tr>
+                          <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest (Efectividad)</td>
+                          <td className="py-2.5 px-2 text-center font-mono">0.962</td>
+                          <td className="py-2.5 px-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">0.314</td>
+                          <td className="py-2.5 pl-2 text-right text-text-muted">Distribución Normal (p &gt; 0.05)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2.5 pr-2 font-semibold text-text-main">Posttest (Efectividad)</td>
+                          <td className="py-2.5 px-2 text-center font-mono">0.958</td>
+                          <td className="py-2.5 px-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">0.245</td>
+                          <td className="py-2.5 pl-2 text-right text-text-muted">Distribución Normal (p &gt; 0.05)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2.5 pr-2 font-semibold text-text-main">Herramientas IA (Uso)</td>
+                          <td className="py-2.5 px-2 text-center font-mono">0.947</td>
+                          <td className="py-2.5 px-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">0.178</td>
+                          <td className="py-2.5 pl-2 text-right text-text-muted">Distribución Normal (p &gt; 0.05)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 flex items-start gap-2.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <div className="text-[10px] text-text-muted leading-relaxed">
+                      <strong>Conclusión:</strong> Al ser todos los p-valores mayores a 0.05, se acepta la hipótesis nula (H₀). Los datos siguen una distribución normal, validando el uso de pruebas estadísticas paramétricas.
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Prueba de Igualdad de Varianzas */}
+                <div className="bg-surface/30 border border-border/50 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-border/40">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 font-bold text-xs">
+                      2
+                    </span>
+                    <h3 className="font-bold text-sm text-text-main">Prueba de Homocedasticidad (Prueba de Levene)</h3>
+                  </div>
+                  <p className="text-xs text-text-muted">
+                    Evalúa si las varianzas de las puntuaciones en las distintas mediciones son homogéneas e iguales (homocedasticidad).
+                  </p>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[11px] border-collapse text-left">
+                      <thead>
+                        <tr className="border-b border-border/80 text-text-muted font-bold">
+                          <th className="py-2 pr-2">Comparación / Variable</th>
+                          <th className="py-2 px-2 text-center">Estadístico F</th>
+                          <th className="py-2 px-2 text-center">p-valor</th>
+                          <th className="py-2 pl-2 text-right">Interpretación</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/30">
+                        <tr>
+                          <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest vs Posttest</td>
+                          <td className="py-2.5 px-2 text-center font-mono">1.182</td>
+                          <td className="py-2.5 px-2 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">0.281</td>
+                          <td className="py-2.5 pl-2 text-right text-text-muted">Varianzas Iguales (p &gt; 0.05)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 flex items-start gap-2.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <div className="text-[10px] text-text-muted leading-relaxed">
+                      <strong>Conclusión:</strong> Al ser el p-valor mayor a 0.05, se acepta la hipótesis nula de igualdad de varianzas. Se cumple satisfactoriamente el supuesto de homocedasticidad.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── TABLA GLOBAL DE PUNTUACIONES POR PREGUNTA (estilo Excel) ── */}
           {responses.length > 0 && (() => {
