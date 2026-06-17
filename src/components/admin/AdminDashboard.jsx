@@ -1364,6 +1364,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
                         <thead>
                           <tr className="border-b border-border/80 text-text-muted font-bold">
                             <th className="py-2 pr-2">Variable / Fase</th>
+                            <th className="py-2 px-2 text-center">N (Muestra)</th>
                             <th className="py-2 px-2 text-center">Estadístico W</th>
                             <th className="py-2 px-2 text-center">p-valor (p)</th>
                             <th className="py-2 pl-2 text-right">Interpretación</th>
@@ -1371,7 +1372,8 @@ export function AdminDashboard({ onLogoutSuccess }) {
                         </thead>
                         <tbody className="divide-y divide-border/30">
                           <tr>
-                            <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest (Averaje General)</td>
+                            <td className="py-2.5 pr-2 font-semibold text-text-main">Pretest (Promedio de cada participante)</td>
+                            <td className="py-2.5 px-2 text-center font-mono">{pretestScores.length}</td>
                             <td className="py-2.5 px-2 text-center font-mono">{shapiroPre.W !== null ? shapiroPre.W.toFixed(4) : '—'}</td>
                             <td className={`py-2.5 px-2 text-center font-mono font-bold ${isPreNormal ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                               {shapiroPre.p !== null ? `p = ${shapiroPre.p.toFixed(4)}` : '—'}
@@ -1381,7 +1383,8 @@ export function AdminDashboard({ onLogoutSuccess }) {
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2.5 pr-2 font-semibold text-text-main">Posttest (Averaje General)</td>
+                            <td className="py-2.5 pr-2 font-semibold text-text-main">Posttest (Promedio de cada participante)</td>
+                            <td className="py-2.5 px-2 text-center font-mono">{posttestScores.length}</td>
                             <td className="py-2.5 px-2 text-center font-mono">{shapiroPost.W !== null ? shapiroPost.W.toFixed(4) : '—'}</td>
                             <td className={`py-2.5 px-2 text-center font-mono font-bold ${isPostNormal ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                               {shapiroPost.p !== null ? `p = ${shapiroPost.p.toFixed(4)}` : '—'}
