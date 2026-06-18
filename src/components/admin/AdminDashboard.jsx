@@ -1582,7 +1582,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
                         </div>
                         <div>
                           <span className="text-text-muted block">p-valor</span>
-                          <span className="text-sm font-bold text-text-main">{rjPre.p !== null ? (rjPre.p < 0.01 ? '<0.010' : rjPre.p.toFixed(3)) : '—'}</span>
+                          <span className="text-sm font-bold text-text-main">{rjPre.p !== null ? (rjPre.p === 0.15 ? '> 0.100' : rjPre.p < 0.01 ? '<0.010' : rjPre.p.toFixed(3)) : '—'}</span>
                         </div>
                       </div>
 
@@ -1591,9 +1591,9 @@ export function AdminDashboard({ onLogoutSuccess }) {
                         <div className="text-[10px] text-text-muted leading-relaxed">
                           <strong>Decisión:</strong> {rjPre.p !== null ? (
                             isPreNormal ? (
-                              `El p-valor ${rjPre.p.toFixed(3)} > 0.05; por lo tanto, acepto la hipótesis nula (H₀). Los datos de pretest provienen de una población con distribución normal.`
+                              `El p-valor ${rjPre.p === 0.15 ? '> 0.100' : rjPre.p.toFixed(3)} > 0.05; por lo tanto, acepto la hipótesis nula (H₀). Los datos de pretest provienen de una población con distribución normal.`
                             ) : (
-                              `El p-valor ${rjPre.p < 0.01 ? '<0.010' : rjPre.p.toFixed(3)} ≤ 0.05; por lo tanto, rechazo la hipótesis nula (H₀). Los datos de pretest no provienen de una población con distribución normal.`
+                              `El p-valor ${rjPre.p === 0.15 ? '> 0.100' : rjPre.p < 0.01 ? '<0.010' : rjPre.p.toFixed(3)} ≤ 0.05; por lo tanto, rechazo la hipótesis nula (H₀). Los datos de pretest no provienen de una población con distribución normal.`
                             )
                           ) : 'Datos insuficientes.'}
                         </div>
@@ -1626,7 +1626,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
                         </div>
                         <div>
                           <span className="text-text-muted block">p-valor</span>
-                          <span className="text-sm font-bold text-text-main">{rjPost.p !== null ? (rjPost.p < 0.01 ? '<0.010' : rjPost.p.toFixed(3)) : '—'}</span>
+                          <span className="text-sm font-bold text-text-main">{rjPost.p !== null ? (rjPost.p === 0.15 ? '> 0.100' : rjPost.p < 0.01 ? '<0.010' : rjPost.p.toFixed(3)) : '—'}</span>
                         </div>
                       </div>
 
@@ -1635,9 +1635,9 @@ export function AdminDashboard({ onLogoutSuccess }) {
                         <div className="text-[10px] text-text-muted leading-relaxed">
                           <strong>Decisión:</strong> {rjPost.p !== null ? (
                             isPostNormal ? (
-                              `El p-valor ${rjPost.p.toFixed(3)} > 0.05; por lo tanto, acepto la hipótesis nula (H₀). Los datos de posttest provienen de una población con distribución normal.`
+                              `El p-valor ${rjPost.p === 0.15 ? '> 0.100' : rjPost.p.toFixed(3)} > 0.05; por lo tanto, acepto la hipótesis nula (H₀). Los datos de posttest provienen de una población con distribución normal.`
                             ) : (
-                              `El p-valor ${rjPost.p < 0.01 ? '<0.010' : rjPost.p.toFixed(3)} ≤ 0.05; por lo tanto, rechazo la hipótesis nula (H₀). Los datos de posttest no provienen de una población con distribución normal.`
+                              `El p-valor ${rjPost.p === 0.15 ? '> 0.100' : rjPost.p < 0.01 ? '<0.010' : rjPost.p.toFixed(3)} ≤ 0.05; por lo tanto, rechazo la hipótesis nula (H₀). Los datos de posttest no provienen de una población con distribución normal.`
                             )
                           ) : 'Datos insuficientes.'}
                         </div>
