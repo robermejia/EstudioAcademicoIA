@@ -132,3 +132,13 @@ Para verificar la capacitación, la aplicación carga asíncronamente el SDK de 
 ### 💾 Persistencia y Tolerancia a Fallas
 - **Caché de Progreso:** Durante el cuestionario, los cambios en los estados de respuesta se guardan en `localStorage` con la clave `ia_cuestionario_progreso`. Si el usuario recarga accidentalmente la página, se recupera el progreso, posicionando al usuario en la misma fase y número de pregunta en el que se encontraba.
 - **Respaldo Offline:** Si falla el envío final a Firestore por problemas de red o conexión, la función `submitSurveyResponse` guarda las respuestas en la cola `ia_cuestionario_backup` de `localStorage`. La pantalla final muestra una alerta de error y le permite al usuario **Reintentar el Envío** o **Descargar un archivo JSON** con su participación para que pueda enviarlo manualmente al investigador.
+
+---
+
+## 5. Credenciales de Acceso Administrador
+
+Para acceder y gestionar el panel de control del estudio, utiliza las siguientes credenciales:
+
+- **Nombre de usuario:** `admin@estudio.com`
+- **Contraseña:** `admin1234`
+

@@ -19,6 +19,8 @@ El sistema sigue una metodología de investigación de tipo **Pretest / Posttest
 
 ### 🎛️ Panel de Administración (Dashboard Estadístico)
 - **Acceso Protegido:** Login de seguridad enlazado con Firebase Authentication.
+  - **Usuario:** `admin@estudio.com`
+  - **Contraseña:** `admin1234`
 - **Auto-Onboarding:** Si la base de datos es nueva (sin administradores), la interfaz de login permite registrar de forma directa la primera cuenta maestra para evitar bloqueos.
 - **KPIs Descriptivos:** Tarjetas con el total de encuestas, edad promedio y porcentajes de uso de IA.
 - **Comparación Visual:** Gráficos comparativos de promedios de Pretest vs. Posttest por dimensión (ChatGPT, Gemini, Copilot, Comprensión de contenidos, Creatividad).
