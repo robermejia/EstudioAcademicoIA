@@ -78,7 +78,7 @@ export function WelcomeScreen({ onStart, showSelector = false }) {
                   <h3 className="font-extrabold text-sm text-text-main">Validez de criterio</h3>
                 </div>
                 <p className="text-[11px] text-text-muted leading-relaxed">
-                  <strong>(Grupo piloto de 20-30 personas)</strong> → Diseñado para estudiantes. Los participantes responden: escala Likert, pretest y postest.
+                  <strong>(Grupo piloto de 20-30 personas)</strong> → Diseñado para estudiantes. Los participantes responden: escala Likert, <span translate="no" className="notranslate">pretest</span> y <span translate="no" className="notranslate">postest</span>.
                 </p>
               </div>
             </div>

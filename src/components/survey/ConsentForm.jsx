@@ -132,9 +132,9 @@ export function ConsentForm({ onAccept, onBack, surveyType }) {
                     <li>Leeré el consentimiento informado.</li>
                     <li>Aceptaré participar voluntariamente.</li>
                     <li>Completaré la ficha de datos generales (edad, sexo, experiencia previa con IA y herramienta de IA utilizada con mayor frecuencia).</li>
-                    <li>Responderé el cuestionario inicial (Pretest), el cual consta de 19 ítems.</li>
+                    <li>Responderé el cuestionario inicial (<span translate="no" className="notranslate">Pretest</span>), el cual consta de 19 ítems.</li>
                     <li>Visualizaré un video de capacitación sobre inteligencia artificial generativa.</li>
-                    <li>Responderé el cuestionario final (Postest), el cual consta de los mismos 19 ítems.</li>
+                    <li>Responderé el cuestionario final (<span translate="no" className="notranslate">Postest</span>), el cual consta de los mismos 19 ítems.</li>
                   </ol>
                   <p className="mt-3">
                     <strong className="text-text-main">Información adicional sobre el procedimiento:</strong>
@@ -142,7 +142,7 @@ export function ConsentForm({ onAccept, onBack, surveyType }) {
                   <ul className="list-disc pl-5 space-y-1 text-text-muted">
                     <li>Todo el proceso se realizará virtualmente a través de esta plataforma web, desde un espacio elegido por el participante que le permita desarrollar las actividades con comodidad y privacidad.</li>
                     <li>La duración aproximada de la participación es de entre 15 y 20 minutos.</li>
-                    <li>El instrumento utilizado será el <em>"Cuestionario sobre Inteligencia Artificial Generativa y Efectividad del Aprendizaje"</em>, conformado por 19 ítems que serán aplicados tanto en el pretest como en el postest, valorados en escala de Likert de 5 puntos.</li>
+                    <li>El instrumento utilizado será el <em>"Cuestionario sobre Inteligencia Artificial Generativa y Efectividad del Aprendizaje"</em>, conformado por 19 ítems que serán aplicados tanto en el <span translate="no" className="notranslate">pretest</span> como en el <span translate="no" className="notranslate">postest</span>, valorados en escala de Likert de 5 puntos.</li>
                     <li>Las dimensiones evaluadas corresponden al uso de herramientas de Inteligencia Artificial Generativa (dimensiones: ChatGPT, Gemini y Copilot) y la efectividad del aprendizaje (dimensiones: Comprensión de contenidos y Creatividad).</li>
                   </ul>
                 </>
