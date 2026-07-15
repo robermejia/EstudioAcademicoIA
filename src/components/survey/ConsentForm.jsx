@@ -1,68 +1,9 @@
 import { useState } from 'react';
 import { ShieldCheck, ArrowRight, ArrowLeft, AlertTriangle, User, FileText, FlaskConical, Gift, Lock, BookOpen, HandHelping, Mail, Phone } from 'lucide-react';
 
-export function ConsentForm({ onAccept, onBack, surveyType }) {
-  const [isAdult, setIsAdult] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [declined, setDeclined] = useState(false);
-  const [showError, setShowError] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (acceptedTerms && isAdult) {
-      onAccept();
-    } else {
-      setShowError(true);
-    }
-  };
-
-  // Pantalla de rechazo
-  if (declined) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        <div className="bg-card border border-border/80 rounded-3xl shadow-sm card-shadow overflow-hidden">
-          <div className="bg-amber-500 px-6 pt-7 pb-6 text-white">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-white/15 rounded-xl shrink-0 mt-0.5">
-                <AlertTriangle className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Participación no confirmada</p>
-                <h2 className="text-lg sm:text-xl font-extrabold leading-snug">No aceptó el consentimiento informado</h2>
-              </div>
-            </div>
-          </div>
-          <div className="px-6 py-8 text-center space-y-4">
-            <p className="text-text-muted text-sm leading-relaxed max-w-lg mx-auto">
-              Ha indicado que <strong className="text-text-main">no acepta</strong> participar en esta investigación.
-              Agradecemos sinceramente su tiempo e interés. Su decisión es completamente respetada y no tendrá ninguna consecuencia negativa.
-            </p>
-            <p className="text-text-muted text-xs">
-              Si desea reconsiderar su decisión, puede volver al formulario de consentimiento.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeclined(false)}
-                className="px-6 py-3 rounded-xl border border-border bg-surface hover:bg-surface-hover text-text-main font-semibold cursor-pointer"
-              >
-                Volver al consentimiento
-              </button>
-              <button
-                type="button"
-                onClick={onBack}
-                className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold cursor-pointer shadow-sm"
-              >
-                Salir al inicio
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const Section = ({ icon: Icon, title, children, color = 'text-primary', bg = 'bg-primary/10 dark:bg-primary/20' }) => (
+const Section = ({ icon: iconComponent, title, children, color = 'text-primary', bg = 'bg-primary/10 dark:bg-primary/20' }) => {
+  const Icon = iconComponent;
+  return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <div className={`p-1.5 ${bg} ${color} rounded-lg shrink-0`}>
@@ -75,6 +16,21 @@ export function ConsentForm({ onAccept, onBack, surveyType }) {
       </div>
     </div>
   );
+};
+
+export function ConsentForm({ onAccept, onBack, surveyType }) {
+  const [isAdult, setIsAdult] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showError, setShowError] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (acceptedTerms && isAdult) {
+      onAccept();
+    } else {
+      setShowError(true);
+    }
+  };
 
   return (
     <div className="relative z-10 max-w-3xl mx-auto px-4 py-6">
@@ -99,7 +55,7 @@ export function ConsentForm({ onAccept, onBack, surveyType }) {
         <div className="px-6 py-5 bg-primary/5 border-b border-border/60">
           <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Título de la investigación</p>
           <p className="text-sm font-bold text-text-main leading-snug">
-            Impacto de la inteligencia artificial generativa en la efectividad del aprendizaje en estudiantes de educación superior virtual
+            Impacto de la inteligencia artificial generativa en la efectividad del aprendizaje en estudiantes de educación superior virtual en Lima Metropolitana
           </p>
           <div className="mt-3 flex flex-col sm:flex-row gap-2 text-xs text-text-muted">
             <span><strong className="text-text-main">Investigadores:</strong> Roberto Agustín Mejía Collazos &amp; Miguel Ángel Velásquez Ysuiza</span>
@@ -111,7 +67,7 @@ export function ConsentForm({ onAccept, onBack, surveyType }) {
         {/* Cuerpo del consentimiento */}
         <div className="px-6 py-6 space-y-6 divide-y divide-border/50">
 
-          {/* Propósito / Objetivo */}
+          {/* 1. Propósito del estudio */}
           <Section icon={FileText} title="Propósito del estudio">
             {surveyType === 'contenido' ? (
               <>
@@ -126,28 +82,25 @@ export function ConsentForm({ onAccept, onBack, surveyType }) {
               <>
                 <p>
                   He sido invitado(a) a participar del estudio titulado{' '}
-                  <em>"Impacto de la inteligencia artificial generativa en la efectividad del aprendizaje en estudiantes de educación superior virtual"</em>,
+                  <em>"Impacto de la inteligencia artificial generativa en la efectividad del aprendizaje en estudiantes de educación superior virtual en Lima Metropolitana"</em>,
                   realizado por <strong className="text-text-main">Roberto Agustín Mejía Collazos</strong> y{' '}
                   <strong className="text-text-main">Miguel Ángel Velásquez Ysuiza</strong>, de la Universidad Tecnológica del Perú (UTP).
                 </p>
                 <p>
                   El objetivo es recopilar información sobre el uso de herramientas de inteligencia artificial generativa (ChatGPT, Gemini y Copilot)
-                  y su influencia en la efectividad del aprendizaje en jóvenes universitarios entre 18 y 35 años
+                  y su influencia en la efectividad del aprendizaje en jóvenes universitarios entre 18 y 38 años
                   pertenecientes a comunidades académicas virtuales.
+                </p>
+                <p className="mt-2">
+                  Se entiende por inteligencia artificial generativa a las herramientas digitales capaces de generar respuestas, textos o contenidos para apoyar el aprendizaje, como ChatGPT, Gemini y Copilot. Asimismo, la efectividad del aprendizaje se refiere a la capacidad del estudiante para comprender los contenidos, retener los conocimientos adquiridos y aplicarlos en situaciones académicas.
                 </p>
               </>
             )}
           </Section>
 
-          {/* Procedimiento */}
-          <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-lg shrink-0">
-                <BookOpen className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">Procedimiento de participación</h3>
-            </div>
-            <div className="pl-8 text-sm text-text-muted leading-relaxed space-y-1.5">
+          {/* 2. Procedimientos */}
+          <div className="pt-5">
+            <Section icon={BookOpen} title="Procedimientos" color="text-sky-600 dark:text-sky-400" bg="bg-sky-500/10 dark:bg-sky-500/20">
               {surveyType === 'contenido' ? (
                 <>
                   <p>La participación se realizará de manera <strong className="text-text-main">virtual</strong> mediante esta plataforma web. Su rol consiste en realizar la evaluación de expertos del instrumento de efectividad de aprendizaje:</p>
@@ -174,270 +127,199 @@ export function ConsentForm({ onAccept, onBack, surveyType }) {
                 </>
               ) : (
                 <>
-                  <p>La participación se realizará de manera <strong className="text-text-main">virtual</strong> mediante esta plataforma web. El procedimiento comprende:</p>
+                  <p>La participación se realizará de manera <strong className="text-text-main">virtual</strong> mediante esta plataforma web. El procedimiento comprende el siguiente orden cronológico:</p>
                   <ol className="list-decimal pl-5 space-y-1 text-text-muted">
-                    <li>Lectura y aceptación del presente consentimiento informado.</li>
-                    <li>Confirmación de mayoría de edad.</li>
-                    <li>Desarrollo del cuestionario inicial (<strong className="text-text-main">pretest</strong>).</li>
-                    <li>Visualización de un <strong className="text-text-main">video de capacitación</strong> sobre inteligencia artificial generativa.</li>
-                    <li>Desarrollo del cuestionario final (<strong className="text-text-main">postest</strong>).</li>
+                    <li>Leeré el consentimiento informado.</li>
+                    <li>Aceptaré participar voluntariamente.</li>
+                    <li>Completaré la ficha de datos generales (edad, sexo, experiencia previa con IA y herramienta de IA utilizada con mayor frecuencia).</li>
+                    <li>Responderé el cuestionario inicial (Pretest), el cual consta de 19 ítems.</li>
+                    <li>Visualizaré un video de capacitación sobre inteligencia artificial generativa.</li>
+                    <li>Responderé el cuestionario final (Postest), el cual consta de los mismos 19 ítems.</li>
                   </ol>
-                  <p className="mt-2">
-                    <strong className="text-text-main">Tiempo estimado:</strong> entre 15 y 20 minutos.{' '}
-                    <strong className="text-text-main">Total de preguntas:</strong> 20 ítems en escala Likert, más preguntas de caracterización general.
+                  <p className="mt-3">
+                    <strong className="text-text-main">Información adicional sobre el procedimiento:</strong>
                   </p>
-                  <div className="mt-2 space-y-1">
-                    <p><strong className="text-text-main">Datos que se recogerán:</strong></p>
-                    <ul className="list-disc pl-5 space-y-0.5">
-                      <li>Edad y sexo.</li>
-                      <li>Uso de herramientas de IA generativa (ChatGPT, Gemini, Copilot).</li>
-                      <li>Nivel de comprensión de contenidos y creatividad en el aprendizaje.</li>
-                      <li>Respuestas al pretest y postest.</li>
-                    </ul>
-                    <p className="text-xs italic mt-1">No se solicitarán datos sensibles ni información que permita identificar personalmente a los participantes.</p>
-                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-text-muted">
+                    <li>Todo el proceso se realizará virtualmente a través de esta plataforma web, desde un espacio elegido por el participante que le permita desarrollar las actividades con comodidad y privacidad.</li>
+                    <li>La duración aproximada de la participación es de entre 15 y 20 minutos.</li>
+                    <li>El instrumento utilizado será el <em>"Cuestionario sobre Inteligencia Artificial Generativa y Efectividad del Aprendizaje"</em>, conformado por 19 ítems que serán aplicados tanto en el pretest como en el postest, valorados en escala de Likert de 5 puntos.</li>
+                    <li>Las dimensiones evaluadas corresponden al uso de herramientas de Inteligencia Artificial Generativa (dimensiones: ChatGPT, Gemini y Copilot) y la efectividad del aprendizaje (dimensiones: Comprensión de contenidos y Creatividad).</li>
+                  </ul>
                 </>
               )}
-            </div>
+            </Section>
           </div>
 
-          {/* Riesgos */}
-          <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg shrink-0">
-                <AlertTriangle className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">Riesgos</h3>
-            </div>
-            <p className="pl-8 text-sm text-text-muted">
-              He sido informado(a) de que <strong className="text-text-main">no existe riesgo</strong> por participar en este estudio.
-              La participación no representa riesgos físicos, psicológicos, sociales ni económicos. Se considera una actividad de <strong className="text-text-main">riesgo mínimo</strong>.
-            </p>
+          {/* 3. Riesgos */}
+          <div className="pt-5">
+            <Section icon={AlertTriangle} title="Riesgos" color="text-amber-500 dark:text-amber-500/20" bg="bg-amber-500/10 dark:bg-amber-500/20">
+              <p>
+                He sido informado(a) de que <strong className="text-text-main">no existe riesgo</strong> por participar en este estudio.
+                La participación no representa riesgos físicos, psicológicos, sociales ni económicos. Se considera una actividad de <strong className="text-text-main">riesgo mínimo</strong>.
+              </p>
+            </Section>
           </div>
 
-          {/* Beneficios */}
-          <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
-                <Gift className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">Beneficios</h3>
-            </div>
-            <div className="pl-8 text-sm text-text-muted space-y-1">
-              <p>Sé que los resultados de este estudio servirán para:</p>
-              <ul className="list-disc pl-5 space-y-0.5">
-                <li>Conocer herramientas de inteligencia artificial generativa.</li>
-                <li>Fortalecer competencias relacionadas con el aprendizaje digital.</li>
-                <li>Contribuir al desarrollo de conocimiento académico sobre el uso de la IA en entornos educativos.</li>
-              </ul>
-            </div>
+          {/* 4. Beneficios */}
+          <div className="pt-5">
+            <Section icon={Gift} title="Beneficios" color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-500/10 dark:bg-emerald-500/20">
+              <p>
+                No existen beneficios directos para el participante. Los beneficios obtenidos serán únicamente indirectos para futuras investigaciones y para mejorar el conocimiento científico.
+              </p>
+            </Section>
           </div>
 
-          {/* Costos e incentivos */}
-          <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-lg shrink-0">
-                <HandHelping className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">Costos e incentivos</h3>
-            </div>
-            <p className="pl-8 text-sm text-text-muted">
-              No debo pagar nada por participar en este estudio. La participación es completamente voluntaria y{' '}
-              <strong className="text-text-main">no contempla incentivos económicos, materiales ni académicos</strong>.
-            </p>
+          {/* 5. Costos e incentivos */}
+          <div className="pt-5">
+            <Section icon={HandHelping} title="Costos e incentivos" color="text-violet-600 dark:text-violet-400" bg="bg-violet-500/10 dark:bg-violet-500/20">
+              <p>
+                No debo pagar nada por participar en este estudio. La participación es completamente voluntaria y{' '}
+                <strong className="text-text-main">no contempla incentivos económicos, materiales ni académicos</strong>.
+              </p>
+            </Section>
           </div>
 
-          {/* Confidencialidad */}
-          <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-primary/10 dark:bg-primary/20 text-primary rounded-lg shrink-0">
-                <Lock className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">Confidencialidad y anonimato</h3>
-            </div>
-            <div className="pl-8 text-sm text-text-muted space-y-1">
+          {/* 6. Confidencialidad */}
+          <div className="pt-5">
+            <Section icon={Lock} title="Confidencialidad" color="text-primary" bg="bg-primary/10 dark:bg-primary/20">
               <p>
                 Los investigadores utilizarán todas las herramientas posibles para proteger la confidencialidad y el anonimato del participante.
                 La información que brinde solo será conocida por los investigadores arriba señalados y únicamente se utilizará con fines de investigación.
               </p>
-              <p>
+              <p className="mt-2">
                 Los resultados serán analizados de forma <strong className="text-text-main">agrupada</strong>, garantizando el anonimato
                 de los participantes y evitando cualquier identificación individual.
               </p>
-            </div>
+            </Section>
           </div>
 
-          {/* Presentación de resultados */}
-          <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-lg shrink-0">
-                <FlaskConical className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">Uso y presentación de los resultados</h3>
-            </div>
-            <p className="pl-8 text-sm text-text-muted">
-              Sé que el informe con los resultados del estudio se presentará a la <strong className="text-text-main">Universidad Tecnológica del Perú (UTP)</strong>.
-              La información obtenida será utilizada únicamente para fines académicos, pudiendo formar parte de informes,
-              trabajos de investigación, artículos científicos o tesis relacionados con el estudio.
-            </p>
-          </div>
-
-          {/* Derechos */}
-          <div className="pt-5 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
-                <User className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">Derechos del participante</h3>
-            </div>
-            <div className="pl-8 text-sm text-text-muted space-y-1.5">
-              <p>
-                Mi participación en este estudio es <strong className="text-text-main">voluntaria</strong>.
-                Si durante el recojo de información decido interrumpir o no continuar con el proceso, puedo retirarme del estudio
-                sin que eso tenga ninguna consecuencia negativa para mí o para mi familia.
-              </p>
-              <p>
-                Si tengo alguna duda, puedo contactar a los investigadores (ver datos al pie).
-                En caso crea haber sido tratado(a) injustamente, puedo comunicarme con el{' '}
-                <strong className="text-text-main">Comité de Ética en Investigación de la UTP</strong> al correo:{' '}
-                <a href="mailto:comiteetica@utp.edu.pe" className="text-primary underline">comiteetica@utp.edu.pe</a>
-              </p>
-            </div>
-          </div>
-
-          {/* Datos de contacto */}
+          {/* 7. Presentación del informe */}
           <div className="pt-5">
-            <div className="bg-surface border border-border/60 rounded-2xl p-4 space-y-2">
-              <p className="text-xs font-bold text-text-main uppercase tracking-wide mb-2">Datos de contacto</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-text-muted">
-                <div className="flex items-start gap-2">
-                  <Mail className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-text-main">Correo electrónico</p>
-                    <a href="mailto:U23254461@utp.edu.pe" className="text-primary hover:underline block">U23254461@utp.edu.pe</a>
-                    <a href="mailto:U23231519@utp.edu.pe" className="text-primary hover:underline block">U23231519@utp.edu.pe</a>
+            <Section icon={FlaskConical} title="Presentación del informe" color="text-sky-600 dark:text-sky-400" bg="bg-sky-500/10 dark:bg-sky-500/20">
+              <p>
+                Los resultados serán presentados a la Universidad Tecnológica del Perú como parte del informe de investigación. La información obtenida podrá formar parte de tesis, informes académicos y publicaciones científicas. Cuando corresponda, el informe podrá estar disponible en el repositorio institucional de la universidad o en revistas científicas.
+              </p>
+            </Section>
+          </div>
+
+          {/* 8. Derechos del participante */}
+          <div className="pt-5">
+            <Section icon={User} title="Derechos del participante" color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-500/10 dark:bg-emerald-500/20">
+              <div className="space-y-3">
+                <p>
+                  La participación es completamente voluntaria. El participante puede retirarse del estudio en cualquier momento sin que eso tenga ninguna consecuencia negativa para él o su familia.
+                </p>
+                <p>
+                  Si tiene dudas sobre la investigación, puede comunicarse con los investigadores mediante el teléfono o correo institucional detallados abajo.
+                </p>
+                <p>
+                  Si considera que fue tratado injustamente, puede comunicarse con el <strong>Comité de Ética en Investigación de la Universidad Tecnológica del Perú</strong> mediante el correo electrónico <a href="mailto:comiteetica@utp.edu.pe" className="text-primary underline">comiteetica@utp.edu.pe</a>. El Comité de Ética en Investigación tiene como finalidad proteger la integridad y los derechos de todos los participantes de estudios académicos.
+                </p>
+              </div>
+
+              {/* Tarjeta de Contacto Integrada */}
+              <div className="mt-4 bg-surface border border-border/60 rounded-2xl p-4 space-y-2">
+                <p className="text-xs font-bold text-text-main uppercase tracking-wide mb-2">Datos de contacto de los investigadores</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-text-muted">
+                  <div className="flex items-start gap-2">
+                    <Mail className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-text-main">Correo electrónico</p>
+                      <a href="mailto:U23254461@utp.edu.pe" className="text-primary hover:underline block">U23254461@utp.edu.pe</a>
+                      <a href="mailto:U23231519@utp.edu.pe" className="text-primary hover:underline block">U23231519@utp.edu.pe</a>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Phone className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-text-main">Teléfono de contacto</p>
-                    <p>991 585 471</p>
-                    <p>965 367 734</p>
+                  <div className="flex items-start gap-2">
+                    <Phone className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-text-main">Teléfono de contacto</p>
+                      <p>991 585 471</p>
+                      <p>965 367 734</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </Section>
           </div>
+
         </div>
 
-        {/* Declaración de consentimiento */}
-        <div className="px-6 pb-6">
-          <div className="border-t border-border/60 pt-5">
-            <p className="text-sm font-bold text-text-main mb-4">Declaración de consentimiento</p>
-            <p className="text-xs text-text-muted mb-4">
-              He leído y comprendido la información expuesta arriba. Comprendo que mi participación es voluntaria
-              y que puedo interrumpirla en cualquier momento sin consecuencias negativas.
-            </p>
-
-            {/* Checkboxes */}
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Acepto — mayoría de edad */}
-              <label className="flex items-start gap-3 cursor-pointer select-none">
-                <input
-                  id="confirm-adult"
-                  type="checkbox"
-                  checked={isAdult}
-                  onChange={(e) => {
-                    setIsAdult(e.target.checked);
-                    setShowError(false);
-                  }}
-                  className="mt-0.5 w-5 h-5 rounded border-border text-primary focus:ring-primary cursor-pointer shrink-0"
-                />
-                <span className="text-sm font-medium text-text-main leading-snug">
-                  Confirmo que soy <strong>mayor de 18 años</strong>.
-                </span>
-              </label>
-
-              {/* Acepto — consentimiento */}
-              <label className="flex items-start gap-3 cursor-pointer select-none">
-                <input
-                  id="confirm-terms"
-                  type="checkbox"
-                  checked={acceptedTerms}
-                  onChange={(e) => {
-                    setAcceptedTerms(e.target.checked);
-                    setShowError(false);
-                  }}
-                  className="mt-0.5 w-5 h-5 rounded border-border text-primary focus:ring-primary cursor-pointer shrink-0"
-                />
-                <span className="text-sm font-medium text-text-main leading-snug">
-                  He leído y acepto el presente consentimiento informado y <strong>acepto participar voluntariamente</strong> en esta investigación.
-                </span>
-              </label>
-
-              {/* Separador */}
-              <div className="flex items-center gap-3 py-1">
-                <div className="flex-1 h-px bg-border/60" />
-                <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">o bien</span>
-                <div className="flex-1 h-px bg-border/60" />
+        {/* 9. CONSENTIMIENTO */}
+        <div className="px-6 pb-6 border-t border-border/50 pt-5">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 dark:bg-primary/20 text-primary rounded-lg shrink-0">
+                <ShieldCheck className="w-4 h-4" />
               </div>
+              <h3 className="font-bold text-text-main text-sm uppercase tracking-wide">CONSENTIMIENTO</h3>
+            </div>
 
-              {/* No acepto */}
-              <label className="flex items-start gap-3 cursor-pointer select-none group">
-                <input
-                  id="decline-terms"
-                  type="checkbox"
-                  checked={declined}
-                  onChange={(e) => {
-                    setDeclined(e.target.checked);
-                    if (e.target.checked) {
-                      setIsAdult(false);
-                      setAcceptedTerms(false);
-                      setShowError(false);
-                    }
-                  }}
-                  className="mt-0.5 w-5 h-5 rounded border-red-300 text-red-500 focus:ring-red-400 cursor-pointer shrink-0"
-                />
-                <span className="text-sm font-medium text-text-muted group-hover:text-red-500 leading-snug">
-                  <strong className="text-red-500">No acepto</strong> participar en esta investigación y deseo salir del formulario.
-                </span>
-              </label>
-
-              {showError && (
-                <p className="text-xs text-red-500 font-medium bg-red-500/10 border border-red-200 dark:border-red-900/30 rounded-xl px-3 py-2">
-                  Por favor, confirme ambas casillas de aceptación para continuar.
-                </p>
-              )}
-
-              <p className="text-[10px] text-text-muted italic pt-1">
-                Una copia de este consentimiento informado puede ser solicitada a los investigadores.
+            <div className="pl-8 space-y-4">
+              <p className="text-sm text-text-muted leading-relaxed">
+                Comprendo la información expuesta anteriormente y acepto participar voluntariamente en esta investigación, sabiendo que puedo retirar mi consentimiento e interrumpir mi participación en cualquier momento, sin consecuencias negativas para mí ni para mi familia.
               </p>
 
-              {/* Botones de navegación */}
-              <div className="flex justify-between items-center pt-4 border-t border-border/60">
-                <button
-                  type="button"
-                  onClick={onBack}
-                  className="flex items-center gap-1.5 px-5 py-3 hover:bg-surface rounded-xl border border-border text-text-main font-semibold cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Atrás
-                </button>
+              {/* Formulario con Casillas de Aceptación */}
+              <form onSubmit={handleSubmit} className="space-y-3">
+                {/* Casilla 1: Mayoría de edad */}
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    id="confirm-adult"
+                    type="checkbox"
+                    checked={isAdult}
+                    onChange={(e) => {
+                      setIsAdult(e.target.checked);
+                      setShowError(false);
+                    }}
+                    className="mt-0.5 w-5 h-5 rounded border-border text-primary focus:ring-primary cursor-pointer shrink-0"
+                  />
+                  <span className="text-sm font-medium text-text-main leading-snug">
+                    Confirmo que soy <strong>mayor de 18 años</strong>.
+                  </span>
+                </label>
 
-                {declined ? (
+                {/* Casilla 2: Aceptación de participación */}
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    id="confirm-terms"
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => {
+                      setAcceptedTerms(e.target.checked);
+                      setShowError(false);
+                    }}
+                    className="mt-0.5 w-5 h-5 rounded border-border text-primary focus:ring-primary cursor-pointer shrink-0"
+                  />
+                  <span className="text-sm font-medium text-text-main leading-snug">
+                    He leído y acepto el presente consentimiento informado y <strong>acepto participar voluntariamente</strong> en esta investigación.
+                  </span>
+                </label>
+
+                {showError && (
+                  <p className="text-xs text-red-500 font-medium bg-red-500/10 border border-red-200 dark:border-red-900/30 rounded-xl px-3 py-2">
+                    Por favor, confirme ambas casillas de aceptación para continuar.
+                  </p>
+                )}
+
+                <p className="text-[10px] text-text-muted italic pt-1">
+                  Una copia de este consentimiento informado puede ser solicitada a los investigadores.
+                </p>
+
+                {/* Botones de navegación */}
+                <div className="flex justify-between items-center pt-4 border-t border-border/60">
                   <button
                     type="button"
-                    onClick={() => setDeclined(true)}
-                    className="flex items-center gap-1.5 px-6 py-3 font-semibold rounded-xl text-white bg-red-500 hover:bg-red-600 shadow-sm cursor-pointer"
+                    onClick={onBack}
+                    className="flex items-center gap-1.5 px-5 py-3 hover:bg-surface rounded-xl border border-border text-text-main font-semibold cursor-pointer"
                   >
-                    <AlertTriangle className="w-4 h-4" />
-                    No acepto — Salir
+                    <ArrowLeft className="w-4 h-4" />
+                    Atrás
                   </button>
-                ) : (
+
                   <button
                     type="submit"
-                    className={`flex items-center gap-1.5 px-6 py-3 font-semibold rounded-xl text-white shadow-sm ${
+                    disabled={!(acceptedTerms && isAdult)}
+                    className={`flex items-center gap-1.5 px-6 py-3 font-semibold rounded-xl text-white shadow-sm transition-all ${
                       acceptedTerms && isAdult
                         ? 'bg-primary hover:bg-primary-hover hover:shadow cursor-pointer'
                         : 'bg-text-muted/30 cursor-not-allowed opacity-60'
@@ -446,9 +328,9 @@ export function ConsentForm({ onAccept, onBack, surveyType }) {
                     Continuar
                     <ArrowRight className="w-4 h-4" />
                   </button>
-                )}
-              </div>
-            </form>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 

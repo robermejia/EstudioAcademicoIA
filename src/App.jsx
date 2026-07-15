@@ -4,6 +4,7 @@ import { Sun, Moon, RotateCcw, GraduationCap } from 'lucide-react';
 // Cargar Componentes del Cuestionario
 import { WelcomeScreen } from './components/survey/WelcomeScreen';
 import { ConsentForm } from './components/survey/ConsentForm';
+import { SelectTypeScreen } from './components/survey/SelectTypeScreen';
 import { DemographicsForm } from './components/survey/DemographicsForm';
 import { LikertCard } from './components/survey/LikertCard';
 import { ProgressBar } from './components/survey/ProgressBar';
@@ -86,7 +87,13 @@ function App() {
   // Estados de la nueva encuesta de expertos
   const [surveyType, setSurveyType] = useState(() => {
     const saved = getLocalProgress();
-    return saved?.surveyType || 'criterio';
+    if (saved?.surveyType) return saved.surveyType;
+    const params = new URLSearchParams(window.location.search);
+    const typeParam = params.get('type');
+    if (typeParam === 'contenido' || typeParam === 'criterio') {
+      return typeParam;
+    }
+    return 'criterio';
   });
   const [expertDemographics, setExpertDemographics] = useState(() => {
     const saved = getLocalProgress();
@@ -302,8 +309,8 @@ function App() {
       case 'WELCOME':
         return (
           <WelcomeScreen
-            onStart={(type) => {
-              setSurveyType(type);
+            showSelector={false}
+            onStart={() => {
               setCurrentStep('CONSENT');
             }}
           />
@@ -314,13 +321,24 @@ function App() {
           <ConsentForm
             surveyType={surveyType}
             onAccept={() => {
-              if (surveyType === 'contenido') {
+              setCurrentStep('SELECT_TYPE');
+            }}
+            onBack={() => setCurrentStep('WELCOME')}
+          />
+        );
+
+      case 'SELECT_TYPE':
+        return (
+          <SelectTypeScreen
+            onSelect={(type) => {
+              setSurveyType(type);
+              if (type === 'contenido') {
                 setCurrentStep('EXPERT_DEMOGRAPHICS');
               } else {
                 setCurrentStep('DEMOGRAPHICS');
               }
             }}
-            onBack={() => setCurrentStep('WELCOME')}
+            onBack={() => setCurrentStep('CONSENT')}
           />
         );
 
@@ -333,7 +351,7 @@ function App() {
               setCurrentStep('EXPERT_EVALUATION');
               setExpertQuestionIndex(0);
             }}
-            onBack={() => setCurrentStep('CONSENT')}
+            onBack={() => setCurrentStep('SELECT_TYPE')}
           />
         );
 
@@ -381,7 +399,7 @@ function App() {
               setCurrentStep('PRETEST');
               setCurrentQuestionIndex(0);
             }}
-            onBack={() => setCurrentStep('CONSENT')}
+            onBack={() => setCurrentStep('SELECT_TYPE')}
           />
         );
       

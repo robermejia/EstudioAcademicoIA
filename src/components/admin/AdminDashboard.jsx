@@ -789,9 +789,10 @@ export function AdminDashboard({ onLogoutSuccess }) {
         <div className="p-6 bg-red-500/10 text-red-600 dark:text-red-400 rounded-2xl border border-red-500/20 text-center font-semibold">
           {error}
         </div>
-      ) : activeTab === 'contenido' ? (
-        // CONTENIDO DEL TAB DE VALIDEZ DE CONTENIDO (AIKEN'S V)
-        <div className="space-y-8 animate-fadeIn">
+      ) : (
+        <>
+          {/* CONTENIDO DEL TAB DE VALIDEZ DE CONTENIDO (AIKEN'S V) */}
+          <div className={activeTab === 'contenido' ? "space-y-8 animate-fadeIn" : "hidden"}>
           {/* Card Informativa del Instrumento */}
           <div className="bg-card border border-border/80 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -1133,9 +1134,8 @@ export function AdminDashboard({ onLogoutSuccess }) {
             )}
           </div>
         </div>
-      ) : (
-        // CONTENIDO DEL TAB DE VALIDEZ DE CRITERIO (GRUPO PILOTO ACTUAL)
-        <div className="space-y-8 animate-fadeIn">
+        {/* CONTENIDO DEL TAB DE VALIDEZ DE CRITERIO (GRUPO PILOTO ACTUAL) */}
+        <div className={activeTab === 'criterio' ? "space-y-8 animate-fadeIn" : "hidden"}>
           {/* Card Informativa de Validez de Criterio */}
           <div className="bg-card border border-border/80 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -1966,6 +1966,7 @@ export function AdminDashboard({ onLogoutSuccess }) {
             )}
           </div>
         </div>
+        </>
       )}
 
       {/* Modal para Agregar Experto */}
