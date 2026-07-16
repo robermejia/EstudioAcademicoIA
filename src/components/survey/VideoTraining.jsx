@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Play, CheckCircle, Video, ArrowRight, AlertCircle, Info } from 'lucide-react';
 
 export function VideoTraining({ onComplete, onBack }) {
-  // Video id: IA Generativa y Efectividad del Aprendizaje (By Videos IA)
-  const videoId = '1Yq4IiX73t4';
+  // Video id: Copilot - Gemini o ChatGPT: ¿Cuál es la mejor IA? Descubre la IA Más Potente (Jr. Software Oficial)
+  const videoId = 'Qotw9t2gPaY';
   const playerRef = useRef(null);
   const [videoStatus, setVideoStatus] = useState('unstarted'); // unstarted, playing, paused, ended
   const [progress, setProgress] = useState(0); // porcentaje visto
@@ -169,23 +169,23 @@ export function VideoTraining({ onComplete, onBack }) {
 
               {/* Datos del video */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] text-text-muted">
-                <div><span className="font-semibold text-text-main">Canal:</span> By Videos IA</div>
+                <div><span className="font-semibold text-text-main">Canal:</span> Jr. Software Oficial</div>
                 <div><span className="font-semibold text-text-main">Año:</span> 2024</div>
-                <div className="sm:col-span-2"><span className="font-semibold text-text-main">Título:</span> <em>Creación de Videos con Inteligencia Artificial</em></div>
+                <div className="sm:col-span-2"><span className="font-semibold text-text-main">Título:</span> <em>Copilot - Gemini o ChatGPT: ¿Cuál es la mejor IA? Descubre la IA Más Potente</em></div>
               </div>
 
               {/* Cita APA */}
               <div>
                 <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1">Formato APA 7.ª edición</p>
                 <p className="text-xs text-text-muted leading-relaxed font-mono bg-card border border-border/40 rounded-lg px-3 py-2 select-all">
-                  By Videos IA. (2024). <em>Creación de Videos con Inteligencia Artificial</em> [Video]. YouTube.{' '}
+                  Jr. Software Oficial. (2024). <em>Copilot - Gemini o ChatGPT: ¿Cuál es la mejor IA? Descubre la IA Más Potente</em> [Video]. YouTube.{' '}
                   <a
-                    href="https://www.youtube.com/watch?v=1Yq4IiX73t4"
+                    href="https://www.youtube.com/watch?v=Qotw9t2gPaY"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary underline break-all"
                   >
-                    https://www.youtube.com/watch?v=1Yq4IiX73t4
+                    https://www.youtube.com/watch?v=Qotw9t2gPaY
                   </a>
                 </p>
               </div>
@@ -194,19 +194,19 @@ export function VideoTraining({ onComplete, onBack }) {
               <div>
                 <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1">Canal oficial</p>
                 <a
-                  href="https://www.youtube.com/@ByVideosIA"
+                  href="https://www.youtube.com/@jrsoftwareoficial"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-primary underline"
                 >
-                  www.youtube.com/@ByVideosIA
+                  www.youtube.com/@jrsoftwareoficial
                 </a>
-                <span className="text-[10px] text-text-muted ml-2">· España · 13.3 K suscriptores</span>
+                <span className="text-[10px] text-text-muted ml-2">· 64.4 K suscriptores</span>
               </div>
 
               {/* Nota de uso */}
               <p className="text-[10px] text-text-muted italic leading-relaxed border-t border-border/40 pt-2">
-                <strong className="text-text-main not-italic">Nota de uso:</strong> Este video es utilizado exclusivamente con fines educativos y de investigación académica sin fines de lucro, conforme a los principios de uso justo (<em>fair use</em>) establecidos en la normativa de derechos de autor. El contenido pertenece a By Videos IA.
+                <strong className="text-text-main not-italic">Nota de uso:</strong> Este video es utilizado exclusivamente con fines educativos y de investigación académica sin fines de lucro, conforme a los principios de uso justo (<em>fair use</em>) establecidos en la normativa de derechos de autor. El contenido pertenece a Jr. Software Oficial.
               </p>
             </div>
           </div>
